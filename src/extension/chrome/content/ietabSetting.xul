@@ -1,0 +1,167 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://ietab/skin/" type="text/css"?>
+
+<!DOCTYPE window SYSTEM "chrome://ietab/locale/ietab.dtd">
+
+<dialog id="ietab-dialog"
+      xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+      autosize="true"
+      resizable="no"
+      persist="screenX screenY"
+      buttons="accept,cancel,extra1,extra2"
+      onload="gIeTab.init();"
+      onunload="gIeTab.destory();"
+      ondialogaccept="gIeTab.setOptions();"
+      ondialogextra1="gIeTab.setOptions();"
+      title="&dialog.title;">
+
+   <script type="application/x-javascript" src="chrome://ietab/content/ietabExtApp.js"/>
+   <script type="application/x-javascript" src="chrome://ietab/content/ietabSetting.js"/>
+   <script type="application/x-javascript" src="chrome://ietab/content/ietabUtils.js"/>
+
+   <tabbox>
+      <tabs>
+         <tab label="&filter.label;"/>
+         <tab label="&general.label;"/>
+         <tab label="&context.label;"/>
+         <tab label="&external.label;"/>
+      </tabs>
+
+      <tabpanels>
+         <tabpanel>
+            <vbox flex="1">
+               <hbox align="center">
+                  <checkbox id="filtercbx" label="&filter.enabled;"
+                     oncommand="gIeTab.updateDialogAllStatus();"/>
+                  <spacer flex="1"/>
+                  <button id="delbtn"
+                     label="&filter.button.delete;"
+                     disabled="true"
+                     oncommand="gIeTab.delSelected();"/>
+               </hbox>
+
+               <hbox align="center" flex="1">
+         		<tree id="filterList" flex="1" width="375" height="170" seltype="multiple"
+         		      enableColumnDrag="true" disableKeyNavigation="true" editable="true"
+         		      onselect="gIeTab.updateDelButtonStatus();">
+         			<treecols>
+         				<treecol id="columnRule" label="&filter.column.rule;" flex="1" persist="width ordinal hidden"/>
+         				<splitter class="tree-splitter"/>
+         				<treecol id="columnEnabled" label="&filter.column.enabled;" flex="0" persist="width ordinal hidden" type="checkbox" editable="true"/>
+         			</treecols>
+         			<treechildren id="filterChilds" ondblclick="gIeTab.onClickFilterList(event);"/>
+         		</tree>
+               </hbox>
+
+               <hbox align="center">
+               <label id="urllabel" value="&filter.url.label;"/>
+                  <textbox id="urlbox" flex="1"
+                     oninput="gIeTab.updateAddButtonStatus();"/>
+                  <button id="addbtn"
+                     label="&filter.button.add;"
+                     disabled="true"
+                     oncommand="gIeTab.addNewURL();"/>
+               </hbox>
+            </vbox>
+         </tabpanel>
+
+         <tabpanel>
+            <vbox flex="1">
+               <groupbox><caption label="&interface.caption;"/>
+                  <hbox align="center">
+                  <checkbox label="&interface.toolsmenu;" id="toolsmenu"/>
+                  <checkbox label="&interface.toolsmenu.icon;" id="toolsmenu.icon" class="indent"/>
+                  </hbox>
+                  <hbox align="center">
+                  <checkbox label="&interface.statusbar;" id="statusbar"/>
+                  </hbox>
+               </groupbox>
+
+               <groupbox><caption label="&switch.caption;"/>
+                  <hbox align="center">
+                  <checkbox label="&switch.handleurl;" id="handleurl"/>
+                  </hbox>
+                  <hbox align="center">
+                  <checkbox label="&switch.alwaysnew;" id="alwaysnew"/>
+                  </hbox>
+                  <hbox align="center">
+                  <checkbox label="&switch.focustab;" id="focustab"/>
+                  </hbox>
+               </groupbox>
+            </vbox>
+         </tabpanel>
+
+         <tabpanel>
+            <vbox flex="1">
+               <groupbox><caption label="&context.caption.tabsmenu;"/>
+                  <hbox align="center">
+                     <checkbox label="&popup.tabbar.switch;" id="tabsmenu.embed"/>
+                     <checkbox label="&popup.tabbar.extapp;" id="tabsmenu.extapp"/>
+                     <checkbox label="&context.icon;" id="tabsmenu.icon"/>
+                  </hbox>
+               </groupbox>
+               <groupbox><caption label="&context.caption.pagelink;"/>
+                  <hbox align="center">
+                     <checkbox label="&popup.viewpage;" id="pagelink.embed"/>
+                     <checkbox label="&popup.viewpage.extapp;" id="pagelink.extapp"/>
+                     <checkbox label="&context.icon;" id="pagelink.icon"/>
+                  </hbox>
+               </groupbox>
+               <groupbox><caption label="&context.caption.bookmark;"/>
+                  <hbox align="center">
+                     <checkbox label="&popup.bookmark;" id="bookmark.embed"/>
+                     <checkbox label="&popup.bookmark.extapp;" id="bookmark.extapp"/>
+                     <checkbox label="&context.icon;" id="bookmark.icon"/>
+                  </hbox>
+               </groupbox>
+            </vbox>
+         </tabpanel>
+
+         <tabpanel>
+            <vbox flex="1">
+               <groupbox><caption label="&external.caption;"/>
+                  <hbox align="center">
+                     <label value="&external.path.label;"/>
+                     <textbox id="pathbox" flex="1" readonly="true"/>
+                     <button id="browsebtn" label="&external.button.browse;"
+                        oncommand="gIeTab.browseAppPath();"/>
+                  </hbox>
+                  <hbox align="center">
+                     <label value="&external.param.label;"/>
+                     <textbox id="parambox" flex="1"/>
+                  </hbox>
+                  <hbox align="center">
+                     <checkbox label="&external.ctrlclick;" id="ctrlclick"/>
+                  </hbox>
+               </groupbox>
+               <spacer flex="1"/>
+                  <hbox align="center">
+                     <spacer flex="1"/>
+                     <button id="resetbtn" label="&external.button.reset;" flex="1"
+                        oncommand="gIeTab.resetAppPath();"/>
+                     <spacer flex="1"/>
+                  </hbox>
+               <spacer flex="1"/>
+            </vbox>
+         </tabpanel>
+      </tabpanels>
+   </tabbox>
+
+   <hbox>
+      <button dlgtype="extra2" id="myExtra2" label="&settings.label;" popup="settings"/>
+      <spacer flex="1"/>
+      <button dlgtype="accept" id="myAccept"/>
+      <button dlgtype="extra1" id="myExtra1" label="&apply.label;"/>
+      <button dlgtype="cancel" id="myCancel"/>
+   </hbox>
+
+   <popupset>
+      <popup id="settings" position="before_start">
+         <menuitem id="default" label="&settings.default;" oncommand="gIeTab.restoreDefault();"/>
+         <menuitem id="import"  label="&settings.import;"  oncommand="gIeTab.importSettings();"/>
+         <menuitem id="export"  label="&settings.export;"  oncommand="gIeTab.exportSettings();"/>
+      </popup>
+   </popupset>
+
+</dialog>
