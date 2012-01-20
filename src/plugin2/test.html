@@ -1,0 +1,160 @@
+<html>
+<head>
+<script type="text/javascript">
+
+function getIeTab() {
+	return document.getElementById("ietab");
+}
+
+var IeTabCallback = {
+	ready: function() {
+		// FIXME: this does not work yet, not implemented.
+		alert("ready!");
+	},
+
+	newTab: function(url) {
+		if(url && url[0] == '@') {
+			// If url starts with a '@', the url string is actually a memory address
+			// It points to a new CWebBrowser control instance created by the plugin.
+			// We store this value to window.browser_id property of the new window.
+			// Then the plugin will read the value from window.browser_id to get it and
+			// it will show that browser control instead of creating a new one.
+			var new_win = window.open("about:blank");
+			new_win.browser_id = url;
+			// now load the container page in a new window
+			new_win.document.location = document.location;
+		}
+		else {
+			// this is a plain URL string, load it.
+			var new_win = window.open(url);
+		}
+	},
+
+	closeTab: function() {
+		// this only works if 'allow_scripts_to_close_windows' is true
+		window.close();
+	},
+	
+	setTitle: function(title) {
+		document.title = title;
+	},
+
+	setProgress: function(progress) {
+		if(progress <= 0 || progress == 100)
+			document.title = getIeTab().title;
+		else
+			document.title = ("progress" + progress + "%");
+	},
+	
+	setStatusText: function(text) {
+		document.getElementById("statusbar").value = text;
+		window.status = text; // this does not work if OOPP is turned on. bug of firefox?
+	},
+
+	setSecurityIcon: function(id) {
+		document.getElementById("security_icon").value = id;
+	},
+
+	setLocation: function(url) {
+		document.getElementById("url").value = url;
+	},
+
+	setCommandState: function(id, enabled) {
+		// FIXME: this does not work yet
+	},
+
+	// check if the browser needs to handle the key press event
+	filterKeyPress: function(keyCode, isAltDown, isCtrlDown, isShiftDown) {
+		if(isAltDown) {
+			switch(keyCode) {
+			case 0x46: // F
+			case 0x45: // E
+			case 0x56: // V
+			case 0x53: // S
+			case 0x42: // B
+			case 0x54: // T
+			case 0x48: // H
+				return true;
+			default:
+			}
+		}
+		else if(isCtrlDown) {
+			switch(keyCode) {
+			case 0x54: // T
+			case 0x4e: // N
+			case 0x4f: // O
+			case 0x2f: // /
+			case 0x44: // D
+				return true;
+			}
+
+			if(isShiftDown) { // Ctrl + Shift
+				switch(keyCode) {
+				case 0x42: // B
+					return true;
+				}
+			}
+		}
+		else if(isShiftDown) {
+			switch(keyCode){
+			case 0x79: // VK_F10
+				return true;
+			}
+		}
+		else {
+			switch(keyCode){
+			case 0x79: // VK_F10
+			case 0x80: // VK_F11
+				return true;
+			}
+		}
+		return false;
+	}
+};
+
+// store the callback object in document, so later gIeTab object can get
+// it from document object for each tab when needed.
+document.IeTabCallback = IeTabCallback;
+
+function go_to_url() {
+	var url = document.getElementById("url").value;
+	getIeTab().navigate(url);
+}
+
+function onload() {
+	if(window.browser_id) // delete the property to save some memory
+		delete window.browser_id;
+	document.getElementById("url").value = "http://www.google.com.tw/";
+}
+
+</script>
+</head>
+
+<body onload="onload()">
+<button onclick="getIeTab().goBack();">Back</button>
+<button onclick="getIeTab().goForward();">Forward</button>
+<button onclick="getIeTab().stop();">Stop</button>
+<button onclick="getIeTab().refresh();">Refresh</button>
+<button onclick="getIeTab().cut();">Cut</button>
+<button onclick="getIeTab().copy();">Copy</button>
+<button onclick="getIeTab().paste();">Paste</button>
+<button onclick="getIeTab().selectAll();">SelAll</button>
+<button onclick="getIeTab().viewSource();">ViewSrc</button>
+<button onclick="getIeTab().find();">Find</button>
+<input size="3" id="security_icon" value="0" />
+<input size="32" id="statusbar" />
+<br />
+URL: <input size="80" id="url" />
+<button onclick="go_to_url();">Go</button>
+<button onclick="getIeTab().saveAs();">SaveAs</button>
+<button onclick="getIeTab().print();">Print</button>
+<button onclick="getIeTab().printSetup();">PrintSetup</button>
+<button onclick="getIeTab().printPreview();">Preview</button>
+<hr />
+
+<object type="application/x-ietab" width="100%" height="90%" id="ietab"></object>
+<script type="text/javascript">
+	getIeTab().callbacks = document.IeTabCallback;
+</script>
+</body>
+</html>
