@@ -87,7 +87,7 @@ var IeTabCallback = {
 			case 0x44: // D
 				return true;
 			}
-
+			
 			if(isShiftDown) { // Ctrl + Shift
 				switch(keyCode) {
 				case 0x42: // B
@@ -145,6 +145,7 @@ function onload() {
 <input size="32" id="statusbar" />
 <br />
 URL: <input size="80" id="url" />
+<button onclick="getIeTab().navigate('http://www.google.com.tw/');">Google</button>
 <button onclick="go_to_url();">Go</button>
 <button onclick="getIeTab().saveAs();">SaveAs</button>
 <button onclick="getIeTab().print();">Print</button>
