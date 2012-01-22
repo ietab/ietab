@@ -1,9 +1,23 @@
 This file contains some notes for hacking on the source code.
 
+========================= Set up the build environment =========================
+
+To build the source code, download Gecko SDK from Mozilla website:
+https://developer.mozilla.org/en/Gecko_SDK
+http://ftp.mozilla.org/pub/mozilla.org/xulrunner/releases/9.0.1/sdk/xulrunner-9.0.1.en-US.win32.sdk.zip
+
+Notes for setting it up:
+https://developer.mozilla.org/en/Creating_XPCOM_Components/Setting_up_the_Gecko_SDK
+
+Then, extract the downloaded zip file and extract it into IE Tab plugin project folder.
+Some tweaking for include paths might be needed to successfully build the project.
+
+=================== About the modifications done and other issues ===============
+
 The npruntime source code is taken from Seamonkey.
 http://mxr.mozilla.org/seamonkey/source/modules/plugin/samples/npruntime/
 
-However, the latest Gecko SDK 8.0 for Firefox 8 is no more compatible with
+However, the latest Gecko SDK 9.0 for Firefox 9 is no more compatible with
 the plugin code. So some modifications are done for MS VC++ .net 2003.
 
 General issues can be found here:
@@ -75,6 +89,9 @@ The npruntime code included in IE Tab already applied the following changes.
    Lukily, a compatible replacement can be found here:
    http://code.google.com/p/msinttypes/
    This adds missing the headers to MS VC++ and the plugin can build.
+   I put them in msinttypes subfolder and listed this folder in C++ include directories.
+
+   However, nptypes.h in newer Gecko SDK seems to do some typedefs for this already.
+   So, these two header files might not be needed.
 
 7. For better readability, I moved ScriptablePluginObject stuff to its own cpp file.
-
