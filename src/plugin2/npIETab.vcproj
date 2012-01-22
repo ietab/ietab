@@ -26,7 +26,7 @@
 				AdditionalIncludeDirectories="&quot;$(InputDir)\xulrunner-9.0.1.en-US.win32.sdk\xulrunner-sdk\include&quot;;&quot;$(InputDir)\msinttypes&quot;"
 				PreprocessorDefinitions="WIN32;_WINDOWS;XP_WIN32;MOZILLA_STRICT_API;XPCOM_GLUE;XP_WIN;_X86_;NPIETAB_EXPORTS;_DEBUG"
 				MinimalRebuild="TRUE"
-				ExceptionHandling="TRUE"
+				ExceptionHandling="FALSE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
@@ -38,7 +38,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="C:\Documents and Settings\PCMan\Application Data\Mozilla\Firefox\Profiles\xaprkw10.default\plugins\npIETab.dll"
+				OutputFile="C:\Users\¬x¥ô¿Ù\AppData\Roaming\Mozilla\Firefox\Profiles\wwh42ka4.default\extensions\{77b819fa-95ad-4f2c-ac7c-486b356188a9}\plugins\npIETab.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(InputDir)\xulrunner-9.0.1.en-US.win32.sdk\xulrunner-sdk\lib&quot;"
 				ModuleDefinitionFile="npruntime\npietab.def"
@@ -89,7 +89,7 @@
 				AdditionalIncludeDirectories="&quot;$(InputDir)\xulrunner-9.0.1.en-US.win32.sdk\xulrunner-sdk\include&quot;;&quot;$(InputDir)\msinttypes&quot;"
 				PreprocessorDefinitions="WIN32;_WINDOWS;XP_WIN32;MOZILLA_STRICT_API;XPCOM_GLUE;XP_WIN;_X86_;NPIETAB_EXPORTS"
 				StringPooling="TRUE"
-				ExceptionHandling="TRUE"
+				ExceptionHandling="FALSE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"

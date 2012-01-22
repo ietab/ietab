@@ -23,7 +23,7 @@ CCustomClientSite::CCustomClientSite(void) {
 }
 
 CCustomClientSite::~CCustomClientSite(void) {
-	ATLTRACE("destroy custom client site\n");
+	// ATLTRACE("destroy custom client site\n");
 }
 
 
