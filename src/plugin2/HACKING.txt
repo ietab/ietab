@@ -1,0 +1,80 @@
+This file contains some notes for hacking on the source code.
+
+The npruntime source code is taken from Seamonkey.
+http://mxr.mozilla.org/seamonkey/source/modules/plugin/samples/npruntime/
+
+However, the latest Gecko SDK 8.0 for Firefox 8 is no more compatible with
+the plugin code. So some modifications are done for MS VC++ .net 2003.
+
+General issues can be found here:
+https://developer.mozilla.org/en/Compiling_The_npruntime_Sample_Plugin_in_Visual_Studio
+
+In addition to the issues listed in that page, more parts need to be fixed.
+The following applies to MS VC++ .net 2003.
+I'm not sure if they applies to newer versions.
+
+========================== ATL 7.1 needs to be fixed =============================
+The ATL version included in VC++ 2003 is 7.1. It has some bugs which prevent it
+from running under Windows 7. This is mainly caused by data execution prevention
+(DEP) technology. ATL 7.1 uses some thunk techniques in its windowing part.
+It generates some machine codes at runtime and executes them. However, it out the
+executable code in heap. Running the code, of course, violates DEP under Win 7.
+Without the fix, the plugin won't work under Windows 7.
+
+Notice, if you have VC++ > 2005, ATL 8.0 is used and the bug has been fixed in it.
+So the following fix is no more needed.
+
+1. Open atlbase.h. It should be in VC++ include dir.
+2. Look for class CDynamicStdCallThunk
+3. The content of CDynamicStdCallThunk::Init(DWORD_PTR proc, void *pThis) looks like this:
+
+	if (pThunk == NULL)
+		pThunk = static_cast<_stdcallthunk *>(HeapAlloc(GetProcessHeap(), 
+			HEAP_GENERATE_EXCEPTIONS, sizeof(_stdcallthunk)));
+	ATLASSERT(pThunk);
+	pThunk->Init(proc, pThis);
+
+3. Edit the code, and make it like this:
+
+	if (pThunk == NULL)
+	{
+		pThunk = static_cast<_stdcallthunk *>(HeapAlloc(GetProcessHeap(), 
+			HEAP_GENERATE_EXCEPTIONS, sizeof(_stdcallthunk)));
+
+		// A quick and dirty fix to make the memory allocated executable
+		// Without this, ATL 7.1 does not work because of DEP.
+		DWORD oldProtect;
+		VirtualProtect(pThunk, sizeof(_stdcallthunk), PAGE_EXECUTE_READWRITE, &oldProtect);
+	}
+	ATLASSERT(pThunk);
+	pThunk->Init(proc, pThis);
+
+4. Things should work now. It's a very quick and dirty fix. This breaks DEP since 
+   VirtualProtect works on a whole memory page, not only on the address you specified.
+   So doing this potentially breaks protection for other data and japerdizes security.
+   If possible, please compile the code with VC++ >= 2005 and ATL 8.
+   We don't have it so we're using VC++ 2003 here.
+
+
+========================= Things to fix in npruntime =============================
+The npruntime code included in IE Tab already applied the following changes.
+
+1. PR_TRUE/PR_FALSE are replaced with true/false.
+
+2. The integer types int32, uint32, int16, ...etc are appended with _t suffixs.
+
+3. Manually #include "npfunctions.h" is required for np_entry.cpp and npn_gate.cpp since
+   NPNetscapeFuncs is defined in npfunctions.h
+
+4. Some code for testing purpose are removed from CPlugin constructor.
+
+5. Some code for XP_MAC and XP_UNIX are removed since this is a Windows only plugin.
+
+6. A really bad news is, VC++ does not support C99 and does not have 
+   inttypes.h and stdint.h, which unfortunately defines the integer types used.
+   Lukily, a compatible replacement can be found here:
+   http://code.google.com/p/msinttypes/
+   This adds missing the headers to MS VC++ and the plugin can build.
+
+7. For better readability, I moved ScriptablePluginObject stuff to its own cpp file.
+
