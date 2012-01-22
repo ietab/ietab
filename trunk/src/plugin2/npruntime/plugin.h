@@ -48,18 +48,18 @@
 #include <atlbase.h>
 #include <atlwin.h>
 #include <atlstr.h>
+#include <atlcoll.h> // for CAtlList
 
 #include <mshtmcid.h>
 
 #include "..\WebBrowser.h"
-#include <list>
 
 #include "..\NPObjectPtr.h"
 
 class CPlugin
 {
 public:
-	static std::list<CWebBrowser*> browserPool;
+	static CAtlList<CWebBrowser*> browserPool;
 
     CPlugin(NPP pNPInstance);
     ~CPlugin();

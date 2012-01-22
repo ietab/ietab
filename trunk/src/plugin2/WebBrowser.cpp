@@ -211,7 +211,7 @@ void CWebBrowser::OnNewWindow2(IDispatch **ppDisp, VARIANT_BOOL *Cancel) {
 	if(hwnd) {
 		// (*newWebBrowser)->QueryInterface(IID_IDispatch, (void**)ppDisp);
 		(*newWebBrowser)->get_Application(ppDisp);
-		CPlugin::browserPool.push_back(newWebBrowser);
+		CPlugin::browserPool.AddTail(newWebBrowser);
 		if(m_Plugin) {
 			m_Plugin->NewTab(newWebBrowser);
 		}

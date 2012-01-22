@@ -49,9 +49,7 @@
 #include "ScriptablePluginObject.h"
 #include "../urlmon_compat.h"
 
-#include <algorithm>
-
-/*static*/ std::list<CWebBrowser*> CPlugin::browserPool; // static c++ objects are evil!
+/*static*/ CAtlList<CWebBrowser*> CPlugin::browserPool; // static c++ objects are evil!
 
 CPlugin::CPlugin(NPP pNPInstance) :
 	m_pWebBrowser(NULL),
@@ -136,10 +134,9 @@ NPBool CPlugin::Init(NPWindow* pNPWindow) {
 		sscanf(browser_id_str.UTF8Characters, "@%p", &existingBrowser);
 
 		// check if the control is really in our pool to prevent random memory access
-		std::list<CWebBrowser*>::iterator it;
-		it = std::find(browserPool.begin(), browserPool.end(), existingBrowser);
-		if(it != browserPool.end()) {
-			browserPool.erase(it); // remove it from the pool.
+		POSITION pos = browserPool.Find(existingBrowser);
+		if(pos != NULL) {
+			browserPool.RemoveAt(pos); // remove it from the pool.
 		}
 		else
 			existingBrowser = NULL;
