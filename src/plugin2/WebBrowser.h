@@ -27,9 +27,10 @@
 
 class CPlugin;
 
-class /*ATL_NO_VTABLE*/ CWebBrowser : public CComPtr<IWebBrowser2>,
-					public CWindowImpl<CWebBrowser, CAxWindow>,
-					public IDispEventImpl<0, CWebBrowser> {
+class /* ATL_NO_VTABLE */ CWebBrowser:
+	public CComPtr<IWebBrowser2>,
+	public CWindowImpl<CWebBrowser, CAxWindow>,
+	public IDispEventImpl<0, CWebBrowser> {
 public:
 	CWebBrowser(CPlugin* plugin);
 	~CWebBrowser();

@@ -23,8 +23,8 @@
 #include "oleidl.h"
 #include <mshtmhst.h>
 
-class CCustomClientSite :
-	public CComObjectRoot,
+class ATL_NO_VTABLE CCustomClientSite :
+	public CComObjectRootEx<CComMultiThreadModel>,
 	public IOleClientSite,
 	public IDocHostUIHandler,
 	public IOleCommandTarget,

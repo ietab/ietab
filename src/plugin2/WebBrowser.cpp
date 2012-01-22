@@ -121,19 +121,22 @@ LRESULT CWebBrowser::OnCreate(UINT uMsg, WPARAM wParam , LPARAM lParam, BOOL& bH
 		(*this)->put_RegisterAsDropTarget(VARIANT_TRUE);
 
 		// Setup a customized client site
-		m_ClientSite = new CComObject<CCustomClientSite>();
-/*
+		CComObject<CCustomClientSite>::CreateInstance(&m_ClientSite); // What is we directly use new operator?
+		m_ClientSite->AddRef(); // This seems to be needed?
+		// m_ClientSite = new CComObject<CCustomClientSite>();
+
 		CComQIPtr<IObjectWithSite> pObjectWithSite;
 		if(SUCCEEDED(QueryHost(&pObjectWithSite))) {
-			pObjectWithSite->SetSite(m_ClientSite->GetUnknown());
+			//pObjectWithSite->SetSite(m_ClientSite->GetUnknown());
 		}
 
 		CComQIPtr<IOleObject> pOleObject(pUnk);
 		if(pOleObject) {
 			CComQIPtr<IOleClientSite> pOleClientSite(m_ClientSite->GetUnknown());
-			pOleObject->SetClientSite(pOleClientSite);
+			//pOleObject->SetClientSite(pOleClientSite);
 		}
-*/	}
+
+	}
 	// ShowScrollBar(SB_BOTH, FALSE);
 
 	++browserCount;
@@ -153,15 +156,28 @@ LRESULT CWebBrowser::OnDestroy(UINT uMsg, WPARAM wParam , LPARAM lParam, BOOL& b
 
 	m_pInPlaceActiveObject.Release();
 
-	// disconnect the sink
-	// DispEventUnadvise(unk, &DIID_DWebBrowserEvents2);
+	CComPtr<IUnknown> pUnk;
+	if(SUCCEEDED(QueryControl(&pUnk)))
+	{
+		// disconnect the sink
+		DispEventUnadvise(pUnk, &DIID_DWebBrowserEvents2);
+
+		CComQIPtr<IOleObject> pOleObject(pUnk);
+		if(pOleObject)
+			pOleObject->SetClientSite(NULL);
+	}
+
+	CComQIPtr<IObjectWithSite> pObjectWithSite;
+	if(SUCCEEDED(QueryHost(&pObjectWithSite))) {
+		pObjectWithSite->SetSite(NULL);
+	}
 
 	if(m_ClientSite) {
-		delete m_ClientSite;
+		// delete m_ClientSite;
+		m_ClientSite->Release();
 		m_ClientSite = NULL;
 	}
 
-	// remove the window from map
 	if(m_hInnerWnd != NULL) {
 
 		// subclass it back
