@@ -67,7 +67,7 @@ LRESULT CALLBACK CWebBrowser::GetMsgHookProc(int code, WPARAM wParam, LPARAM lPa
 							bool isAltDown = GetKeyState(VK_MENU) & 0x8000 ? true : false;
 							bool isCtrlDown = GetKeyState(VK_CONTROL) & 0x8000 ? true : false;
 							bool isShiftDown = GetKeyState(VK_SHIFT) & 0x8000 ? true : false;
-							if(pWebBrowser->GetPlugin()->filterKeyPress(msg->wParam, isAltDown, isCtrlDown, isShiftDown)) {
+							if(pWebBrowser->GetPlugin()->filterKeyPress(static_cast<int>(msg->wParam), isAltDown, isCtrlDown, isShiftDown)) {
 								needTranslateAccelerator = false; // the browser wants it!
 								// forward the message to parent window.
 								HWND toplevel = ::GetParent(pWebBrowser->GetPlugin()->GetHwnd());
