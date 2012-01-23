@@ -390,8 +390,12 @@ void CPlugin::GlobalDestroy() {
 			plugin->m_pWebBrowser->MoveWindow(0, 0, rc.right, rc.bottom);
 		break;
 	}
-	case WM_ERASEBKGND:
-		return TRUE;
+	case WM_ERASEBKGND: {
+        CPlugin * plugin = (CPlugin *)GetWindowLongPtr(hWnd, GWL_USERDATA);
+		if(plugin->m_pWebBrowser) // if web browser control is created
+			return TRUE; // don't paint background
+		break;
+	}
 	// case WM_PAINT:
 	//	return 0;
 	default:
