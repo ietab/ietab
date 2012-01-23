@@ -49,7 +49,8 @@
 #include "ScriptablePluginObject.h"
 #include "../urlmon_compat.h"
 
-/*static*/ CAtlList<CWebBrowser*> CPlugin::browserPool; // static c++ objects are evil!
+//static
+CWebBrowserPool* CPlugin::browserPool;
 
 CPlugin::CPlugin(NPP pNPInstance) :
 	m_pWebBrowser(NULL),
@@ -105,71 +106,9 @@ NPBool CPlugin::Init(NPWindow* pNPWindow) {
 	// FIXME: we need a better and cleaner way to do this.
 	NPN_GetValue(m_pNPInstance, NPNVWindowNPObject, reinterpret_cast<void*>(&m_pWindowObject.p));
 
-	// CoInternetSetFeatureEnabled, enable some new features in newer IE
-	static bool globalInit = false;
-	if(!globalInit) {
-		HMODULE hUrlMonDll = LoadLibrary(_T("urlmon.dll"));
-		if(hUrlMonDll) {
-			typedef HRESULT (WINAPI *PCoInternetSetFeatureEnabled)(INTERNETFEATURELIST, DWORD, BOOL);
-			PCoInternetSetFeatureEnabled pCoInternetSetFeatureEnabled = reinterpret_cast<PCoInternetSetFeatureEnabled>(GetProcAddress(hUrlMonDll, "CoInternetSetFeatureEnabled"));
-			if(pCoInternetSetFeatureEnabled) {
-				pCoInternetSetFeatureEnabled(FEATURE_WEBOC_POPUPMANAGEMENT, SET_FEATURE_ON_PROCESS, TRUE);
-				pCoInternetSetFeatureEnabled(FEATURE_SECURITYBAND, SET_FEATURE_ON_PROCESS, TRUE);
-				pCoInternetSetFeatureEnabled(FEATURE_LOCALMACHINE_LOCKDOWN, SET_FEATURE_ON_PROCESS, TRUE);
-				pCoInternetSetFeatureEnabled(FEATURE_SAFE_BINDTOOBJECT, SET_FEATURE_ON_PROCESS, TRUE);
-				// #define FEATURE_TABBED_BROWSING 19
-				// pCoInternetSetFeatureEnabled((INTERNETFEATURELIST)FEATURE_TABBED_BROWSING, SET_FEATURE_ON_PROCESS, TRUE);	// IE7+
-			}
-			FreeLibrary(hUrlMonDll);
-		}
-		globalInit = true;
-	}
 
-	// See if window.browser_id points to a pre-existing WebBrowser control.
-	CWebBrowser* existingBrowser = NULL;
-	NPVariant browser_id_variant;
-	m_pWindowObject.GetProperty(m_pNPInstance, &browser_id_variant, "browser_id");
-	NPString browser_id_str = NPVARIANT_TO_STRING(browser_id_variant);
-	if(browser_id_str.UTF8Characters) {
-		sscanf(browser_id_str.UTF8Characters, "@%p", &existingBrowser);
-
-		// check if the control is really in our pool to prevent random memory access
-		POSITION pos = browserPool.Find(existingBrowser);
-		if(pos != NULL) {
-			browserPool.RemoveAt(pos); // remove it from the pool.
-		}
-		else
-			existingBrowser = NULL;
-	}
-	NPN_ReleaseVariantValue(&browser_id_variant);
-
-	RECT rc;
-	GetClientRect(m_hWnd, &rc);
-	if(existingBrowser) { // if an existing brower control is assigned to our browser window
-		m_pWebBrowser = existingBrowser;
-
-		m_pWebBrowser->SetPlugin(this);
-		m_pWebBrowser->SetParent(m_hWnd);
-		m_pWebBrowser->MoveWindow(rc.left, rc.top, (rc.right - rc.left), (rc.bottom - rc.top));
-	}
-	else { // create a new browser control
-		m_pWebBrowser = new CWebBrowser(this);
-		m_pWebBrowser->Create(m_hWnd, rc);
-	}
-	if(m_pWebBrowser) {
-		m_pWebBrowser->SetWindowPos(HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_SHOWWINDOW);
-//		m_pWebBrowser->ShowWindow(SW_SHOW);
-	}
-
-#if 0
-    // hostWin = new CAxWindow(m_hWnd);
-    hostWin = new CAxWindow(NULL);
-    // hostWin->Create(m_hWnd ,&rc, L"{8856F961-340A-11D0-A96B-00C04FD705A2}", WS_VISIBLE|WS_CHILD);
-    // http://crisdin.blogbus.com/logs/169805728.html
-    hostWin->Create(m_hWnd ,&rc, L"Shell.Explorer", WS_VISIBLE|WS_CHILD);
-    // hostWin->Attach(m_hWnd);
-    // hostWin->CreateControl(L"Shell.Explorer");
-#endif
+	// NOTE: we do not create the browser control here.
+	//       we create it in Navigate() on demand, which in turns calls InitBrowser()
 
 	// Tell the world that we're ready for use!
 	if(m_pCallbackObject) {
@@ -197,6 +136,51 @@ void CPlugin::Destroy() {
     m_hWnd = NULL;
     m_bInitialized = FALSE;
 }
+
+bool CPlugin::InitBrowser(const char* url) {
+
+	CWebBrowser* existingBrowser = NULL;
+
+	if(url && url[0] == '@') { // the URL is a browser_id
+		// See if the browser id really points to a
+		// valid pre-existing WebBrowser control.
+		sscanf(url, "@%p", &existingBrowser);
+		// check if the control is really in our pool to prevent random memory access
+		POSITION pos = browserPool->Find(existingBrowser);
+		if(pos != NULL) {
+			browserPool->RemoveAt(pos); // remove it from the pool.
+		}
+		else
+			existingBrowser = NULL;
+	}
+
+	RECT rc;
+	GetClientRect(m_hWnd, &rc);
+	if(existingBrowser) { // if an existing brower control is assigned to our browser window
+		// FIXME: check if its HWND is valid as well.
+		m_pWebBrowser = existingBrowser;
+
+		m_pWebBrowser->SetPlugin(this);
+		m_pWebBrowser->SetParent(m_hWnd);
+		m_pWebBrowser->SetWindowPos(HWND_BOTTOM, rc.left, rc.top, (rc.right - rc.left), (rc.bottom - rc.top), SWP_SHOWWINDOW);
+		m_pWebBrowser->ShowWindow(SW_SHOW);
+		(*m_pWebBrowser)->put_Visible(VARIANT_TRUE);
+	}
+	else { // create a new browser control
+		m_pWebBrowser = new CWebBrowser(this);
+		if(m_pWebBrowser->Create(m_hWnd, rc)) {
+			m_pWebBrowser->SetWindowPos(HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_SHOWWINDOW);
+			// the web browser control is successfully created, navigate to the URL
+			Navigate(url);
+		}
+		else {
+			delete m_pWebBrowser;
+			m_pWebBrowser = NULL;
+		}
+	}
+	return (m_pWebBrowser != NULL);
+}
+
 
 bool CPlugin::IsInitialized() {
     return m_bInitialized;
@@ -359,6 +343,40 @@ CString CPlugin::GetPageURL(void)
 }
 
 
+// static
+void CPlugin::GlobalInit() {
+
+	// CoInternetSetFeatureEnabled, enable some new features in newer IE
+	HMODULE hUrlMonDll = LoadLibrary(_T("urlmon.dll"));
+	if(hUrlMonDll) {
+		typedef HRESULT (WINAPI *PCoInternetSetFeatureEnabled)(INTERNETFEATURELIST, DWORD, BOOL);
+		PCoInternetSetFeatureEnabled pCoInternetSetFeatureEnabled = reinterpret_cast<PCoInternetSetFeatureEnabled>(GetProcAddress(hUrlMonDll, "CoInternetSetFeatureEnabled"));
+		if(pCoInternetSetFeatureEnabled) {
+			pCoInternetSetFeatureEnabled(FEATURE_WEBOC_POPUPMANAGEMENT, SET_FEATURE_ON_PROCESS, TRUE);
+			pCoInternetSetFeatureEnabled(FEATURE_SECURITYBAND, SET_FEATURE_ON_PROCESS, TRUE);
+			pCoInternetSetFeatureEnabled(FEATURE_LOCALMACHINE_LOCKDOWN, SET_FEATURE_ON_PROCESS, TRUE);
+			pCoInternetSetFeatureEnabled(FEATURE_SAFE_BINDTOOBJECT, SET_FEATURE_ON_PROCESS, TRUE);
+			// #define FEATURE_TABBED_BROWSING 19
+			// pCoInternetSetFeatureEnabled((INTERNETFEATURELIST)FEATURE_TABBED_BROWSING, SET_FEATURE_ON_PROCESS, TRUE);	// IE7+
+		}
+		FreeLibrary(hUrlMonDll);
+	}
+
+	// create the web browser pool
+	browserPool = new CWebBrowserPool();
+	browserPool->Create(HWND_DESKTOP);
+}
+
+// static
+void CPlugin::GlobalDestroy() {
+	if(browserPool) {
+		browserPool->DestroyWindow();
+		delete browserPool; // FIXME: should we use delete this in FinalMessage?
+		browserPool = NULL;
+	}
+}
+
+
 // --------------------------------------------------------------------------------------------
 // Following are Windows dirty jobs
 
@@ -390,7 +408,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
     case DLL_PROCESS_ATTACH:
         // DisableThreadLibraryCalls(hinstDLL);
         comModule.Init(NULL, hinstDLL, &LIBID_ATLLib);
-
         // Due to a bug of ATL, we should either pass our LIBID here, or
         // link to ATL dynamically. So we link atl dynamically.
         // http://support.microsoft.com/kb/832687/en-us
@@ -399,7 +416,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
         break;
     case DLL_PROCESS_DETACH:
         comModule.Term();
-        // delete atlModule;
+		// delete atlModule;
         // atlModule = NULL;
         break;
     default:

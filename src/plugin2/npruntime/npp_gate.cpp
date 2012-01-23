@@ -48,16 +48,16 @@ NPP_GetMIMEDescription(void)
   return "application/x-ietab: IE Tab Plugin";
 }
 
+/*
 NPError NPP_Initialize(void)
 {
-	// FIXME: this function does not seem to be called in newer Firefox?
   return NPERR_NO_ERROR;
 }
 
 void NPP_Shutdown(void)
 {
-	// FIXME: this function does not seem to be called in newer Firefox?
 }
+*/
 
 // here the plugin creates an instance of our CPlugin object which 
 // will be associated with this newly created plugin instance and 

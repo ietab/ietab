@@ -44,7 +44,6 @@
 
 // properties
 static NPIdentifier callbacks_id;
-static NPIdentifier canClose_id;
 static NPIdentifier canBack_id;
 static NPIdentifier canForward_id;
 static NPIdentifier canRefresh_id;
@@ -329,7 +328,6 @@ bool
 ScriptablePluginObject::HasProperty(NPIdentifier name)
 {
     return (name == callbacks_id ||
-            name == canClose_id ||
             name == canBack_id ||
             name == canForward_id ||
             name == canRefresh_id ||
@@ -354,9 +352,6 @@ ScriptablePluginObject::GetProperty(NPIdentifier name, NPVariant *result)
 		if(target)
 			NPN_RetainObject(target);
 		OBJECT_TO_NPVARIANT(target, *result);
-    }
-    else if(name == canClose_id) {
-		BOOLEAN_TO_NPVARIANT(GetPlugin()->GetCanClose(), *result);
     }
     else if(name == canBack_id) {
 		BOOLEAN_TO_NPVARIANT(GetPlugin()->GetCanBack(), *result);
@@ -505,7 +500,6 @@ ScriptablePluginObject::InvokeDefault(const NPVariant *args, uint32_t argCount,
 void ScriptablePluginObject::InitSymbols() {
     // properties
     callbacks_id = NPN_GetStringIdentifier("callbacks");
-    canClose_id = NPN_GetStringIdentifier("canClose");
     canBack_id = NPN_GetStringIdentifier("canBack");
     canForward_id = NPN_GetStringIdentifier("canForward");
     canRefresh_id = NPN_GetStringIdentifier("canRefresh");

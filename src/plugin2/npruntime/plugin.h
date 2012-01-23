@@ -53,20 +53,31 @@
 #include <mshtmcid.h>
 
 #include "..\WebBrowser.h"
+#include "..\WebBrowserPool.h"
 
 #include "..\NPObjectPtr.h"
 
 class CPlugin
 {
 public:
-	static CAtlList<CWebBrowser*> browserPool;
+	static CWebBrowserPool* browserPool;
 
     CPlugin(NPP pNPInstance);
     ~CPlugin();
 
+	// called by npruntime everytime a new CPlugin instance is initialized
     NPBool Init(NPWindow* pNPWindow);
+	
+	// called by npruntime everytime a new CPlugin instance is destroyed
     void Destroy();
-    bool IsInitialized();
+
+	// called once after the plugin dll is loaded
+	static void GlobalInit();
+
+	// called before unloading of the plugin dll
+	static void GlobalDestroy();
+
+	bool IsInitialized(); // check if the plugin is initialized
 
 	CWebBrowser* GetWebBrowser() {
 		return m_pWebBrowser;
@@ -83,7 +94,15 @@ public:
 			static_cast<CWindow*>(m_pWebBrowser)->SetParent(m_hWnd);
 	}
 
+	// create a webbrowser control and load the url, if we don't have one.
+	// if url starts with @, this is a memory address pointing to an 
+	// existing CWebBrowser object in browser pool.
+	bool InitBrowser(const char* url);
+
+	// called by npruntime, only for Mac OS X
     int16_t HandleEvent(void* event);
+
+	// called by npruntime to get a scriptable object
     NPObject *GetScriptableObject();
 
     // plugin methods exported via NPAPI
@@ -101,15 +120,10 @@ public:
 
 	bool Navigate(const char* url) {
 		if(!m_pWebBrowser) {
-			return false;
-			/*
-			RECT rc;
-			GetClientRect(m_hWnd, &rc);
-			m_pWebBrowser = new CWebBrowser(this);
-			m_pWebBrowser->Create(m_hWnd, rc);
-			m_pWebBrowser->ShowWindow(SW_SHOW);
-			*/
+			// If browser object is not created
+			return InitBrowser(url); // try to initialize the browser
 		}
+
 		CComVariant vurl = url;
 		CComVariant null;
 		return SUCCEEDED((*m_pWebBrowser)->Navigate2(&vurl, &null, &null, &null, &null));
@@ -220,10 +234,6 @@ public:
 		return IsOleCommandEnabled(OLECMDID_PASTE);
 	}
 
-	bool GetCanClose() {
-		return true;
-	}
-
 	long GetProgress() {
 		return m_Progress;
 	}
@@ -246,7 +256,7 @@ public:
 	void NewTab(CWebBrowser* newWebBrowser);
 	void CloseTab();
 
-	bool filterKeyPress(int keyCode, bool isAltDown, bool isCtrlDown, bool isShiftDown) {
+	bool FilterKeyPress(int keyCode, bool isAltDown, bool isCtrlDown, bool isShiftDown) {
 		bool ret = false;
 		if(m_pCallbackObject) {
 			static NPIdentifier filterKeyPress_id = 0;
