@@ -31,8 +31,7 @@ CWebBrowser::CWebBrowser(CPlugin* plugin):
 	m_hInnerWnd(NULL),
 	m_CanBack(false),
 	m_CanForward(false),
-	m_OldInnerWndProc(NULL),
-	m_ClientSite(NULL) {
+	m_OldInnerWndProc(NULL) {
 }
 
 CWebBrowser::~CWebBrowser() {
@@ -53,7 +52,8 @@ LRESULT CALLBACK CWebBrowser::GetMsgHookProc(int code, WPARAM wParam, LPARAM lPa
 		if(wParam == PM_REMOVE) { // GetMessage() is called
 			MSG* msg = reinterpret_cast<MSG*>(lParam);
 			// here we only handle keyboard messages
-			if(msg->message >= WM_KEYFIRST && msg->message <= WM_KEYLAST) {
+			if((msg->message >= WM_KEYFIRST && msg->message <= WM_KEYLAST) ||
+			   (msg->message >= WM_MOUSEFIRST || msg->message <= WM_MOUSELAST)) {
 				// get the browser object from HWND
 				CWebBrowser* pWebBrowser = reinterpret_cast<CWebBrowser*>(GetProp(msg->hwnd, reinterpret_cast<LPCTSTR>(winPropAtom)));
 				if(pWebBrowser != NULL) {
@@ -90,7 +90,11 @@ LRESULT CALLBACK CWebBrowser::GetMsgHookProc(int code, WPARAM wParam, LPARAM lPa
 								// I, however, am not sure if this is correct.
 								// MSDN did not tell us whether we should pass the message to other hooks
 								// before or after we change its content.
-								DispatchMessage(msg);
+
+								// FIXME: It seems that we should not dispatch the message.
+								//        Otherwise, the web browser control will receive
+								//        duplicated key events sometimes?
+								// DispatchMessage(msg);
 								ATLTRACE("TRANSLATED!!\n");
 								msg->message = WM_NULL; // eat the message
 							}
@@ -104,9 +108,51 @@ LRESULT CALLBACK CWebBrowser::GetMsgHookProc(int code, WPARAM wParam, LPARAM lPa
 }
 
 LRESULT CWebBrowser::OnCreate(UINT uMsg, WPARAM wParam , LPARAM lParam, BOOL& bHandled) {
-	// We must call DefWindowProc before we can attach to the control.
-	LRESULT ret = DefWindowProc( uMsg, wParam,lParam);
 
+	// See ATL source code in atlhost.h
+	// static LRESULT CALLBACK AtlAxWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+	// ATL creates a new CAxHostWindow object when handling WM_CREATE message.
+	// We intercept WM_CREATE, and create our CWebBrowserHost object instead.
+
+	// This is to make sure drag drop works
+	::OleInitialize(NULL);
+
+	CREATESTRUCT* lpCreate = (CREATESTRUCT*)lParam;
+	int nCreateSize = 0;
+	if (lpCreate && lpCreate->lpCreateParams)
+		nCreateSize = *((WORD*)lpCreate->lpCreateParams);
+	HGLOBAL h = GlobalAlloc(GHND, nCreateSize);
+	CComPtr<IStream> spStream;
+	if (h && nCreateSize) {
+		BYTE* pBytes = (BYTE*) GlobalLock(h);
+		BYTE* pSource = ((BYTE*)(lpCreate->lpCreateParams)) + sizeof(WORD); 
+		//Align to DWORD
+		//pSource += (((~((DWORD)pSource)) + 1) & 3);
+		memcpy(pBytes, pSource, nCreateSize);
+		GlobalUnlock(h);
+		CreateStreamOnHGlobal(h, TRUE, &spStream);
+	}
+
+	IAxWinHostWindow* pAxWindow = NULL;
+	CComPtr<IUnknown> spUnk;
+	LPCTSTR lpstrName = _T("about:blank");
+	HRESULT hRet = CWebBrowserHost::AxCreateControlLicEx(T2COLE(lpstrName), m_hWnd, spStream, &spUnk, NULL, IID_NULL, NULL, NULL);
+
+	if(FAILED(hRet))
+		return -1;	// abort window creation
+	hRet = spUnk->QueryInterface(__uuidof(IAxWinHostWindow), (void**)&pAxWindow);
+	if(FAILED(hRet))
+		return -1;	// abort window creation
+
+	SetWindowLongPtr(GWLP_USERDATA, (DWORD_PTR)pAxWindow);
+	// continue with DefWindowProc
+	LRESULT ret = ::DefWindowProc(m_hWnd, uMsg, wParam, lParam);
+	bHandled = TRUE;
+
+	// Now, the Web Browser Active X control is created.
+	// Let's do what we want.
+
+	// Set up event sink
 	IUnknown* pUnk = NULL;
 	if(SUCCEEDED(QueryControl<IUnknown>(&pUnk))) {
 
@@ -119,25 +165,7 @@ LRESULT CWebBrowser::OnCreate(UINT uMsg, WPARAM wParam , LPARAM lParam, BOOL& bH
 		m_pInPlaceActiveObject = *this; // store the IOleInPlaceActiveObject iface for future use
 		(*this)->put_RegisterAsBrowser(VARIANT_TRUE);
 		(*this)->put_RegisterAsDropTarget(VARIANT_TRUE);
-
-		// Setup a customized client site
-		CComObject<CCustomClientSite>::CreateInstance(&m_ClientSite); // What is we directly use new operator?
-		m_ClientSite->AddRef(); // This seems to be needed?
-		// m_ClientSite = new CComObject<CCustomClientSite>();
-
-		CComQIPtr<IObjectWithSite> pObjectWithSite;
-		if(SUCCEEDED(QueryHost(&pObjectWithSite))) {
-			//pObjectWithSite->SetSite(m_ClientSite->GetUnknown());
-		}
-
-		CComQIPtr<IOleObject> pOleObject(pUnk);
-		if(pOleObject) {
-			CComQIPtr<IOleClientSite> pOleClientSite(m_ClientSite->GetUnknown());
-			//pOleObject->SetClientSite(pOleClientSite);
-		}
-
 	}
-	// ShowScrollBar(SB_BOTH, FALSE);
 
 	++browserCount;
 	if(getMsgHook == NULL) {
@@ -148,35 +176,12 @@ LRESULT CWebBrowser::OnCreate(UINT uMsg, WPARAM wParam , LPARAM lParam, BOOL& bH
 		winPropAtom = GlobalAddAtom(L"IETab::WebBrowser");
 	}
 
-	SetProp(m_hWnd, reinterpret_cast<LPCTSTR>(winPropAtom), reinterpret_cast<HANDLE>(this));
 	return ret;
 }
 
 LRESULT CWebBrowser::OnDestroy(UINT uMsg, WPARAM wParam , LPARAM lParam, BOOL& bHandled) {
 
 	m_pInPlaceActiveObject.Release();
-
-	CComPtr<IUnknown> pUnk;
-	if(SUCCEEDED(QueryControl(&pUnk)))
-	{
-		// disconnect the sink
-		DispEventUnadvise(pUnk, &DIID_DWebBrowserEvents2);
-
-		CComQIPtr<IOleObject> pOleObject(pUnk);
-		if(pOleObject)
-			pOleObject->SetClientSite(NULL);
-	}
-
-	CComQIPtr<IObjectWithSite> pObjectWithSite;
-	if(SUCCEEDED(QueryHost(&pObjectWithSite))) {
-		pObjectWithSite->SetSite(NULL);
-	}
-
-	if(m_ClientSite) {
-		// delete m_ClientSite;
-		m_ClientSite->Release();
-		m_ClientSite = NULL;
-	}
 
 	if(m_hInnerWnd != NULL) {
 
@@ -186,7 +191,6 @@ LRESULT CWebBrowser::OnDestroy(UINT uMsg, WPARAM wParam , LPARAM lParam, BOOL& b
 		ATLTRACE("window removed!!\n");
 		RemoveProp(m_hInnerWnd, reinterpret_cast<LPCTSTR>(winPropAtom));
 	}
-	RemoveProp(m_hWnd, reinterpret_cast<LPCTSTR>(winPropAtom));
 
 	--browserCount;
 	// uninstall the hook if no one needs it now

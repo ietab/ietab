@@ -23,7 +23,7 @@
 #include <atlwin.h>
 #include <ExDispid.h>
 
-#include "CustomClientSite.h"
+#include "WebBrowserHost.h"
 
 class CPlugin;
 
@@ -35,12 +35,11 @@ public:
 	CWebBrowser(CPlugin* plugin);
 	~CWebBrowser();
 
+	DECLARE_WND_SUPERCLASS(_T("IETabHost"), GetWndClassName())
+
 	HWND Create(HWND parentWnd, RECT& rc) {
-		// we can also use about:blank instead of Shell.Explorer here
-		HWND ret = CWindowImpl<CWebBrowser, CAxWindow>::Create(parentWnd, 
-																	&rc, 
-																	_T("about:blank"),
-																	WS_CHILD|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|WS_VSCROLL|WS_HSCROLL);
+		HWND ret = CWindowImpl<CWebBrowser, CAxWindow>::Create(parentWnd, &rc, _T(""),
+															WS_CHILD|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|WS_VSCROLL|WS_HSCROLL);
 		return ret;
 	}
 
@@ -110,8 +109,6 @@ private:
 	CComQIPtr<IOleInPlaceActiveObject> m_pInPlaceActiveObject;
 	bool m_CanBack;
 	bool m_CanForward;
-
-	CComObject<CCustomClientSite>* m_ClientSite;
 
 	static int browserCount;
 	static ATOM winPropAtom;
