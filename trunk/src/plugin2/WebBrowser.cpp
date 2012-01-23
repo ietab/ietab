@@ -67,7 +67,7 @@ LRESULT CALLBACK CWebBrowser::GetMsgHookProc(int code, WPARAM wParam, LPARAM lPa
 							bool isAltDown = GetKeyState(VK_MENU) & 0x8000 ? true : false;
 							bool isCtrlDown = GetKeyState(VK_CONTROL) & 0x8000 ? true : false;
 							bool isShiftDown = GetKeyState(VK_SHIFT) & 0x8000 ? true : false;
-							if(pWebBrowser->GetPlugin()->filterKeyPress(static_cast<int>(msg->wParam), isAltDown, isCtrlDown, isShiftDown)) {
+							if(pWebBrowser->GetPlugin()->FilterKeyPress(static_cast<int>(msg->wParam), isAltDown, isCtrlDown, isShiftDown)) {
 								needTranslateAccelerator = false; // the browser wants it!
 								// forward the message to parent window.
 								HWND toplevel = ::GetParent(pWebBrowser->GetPlugin()->GetHwnd());
@@ -207,21 +207,14 @@ LRESULT CWebBrowser::OnDestroy(UINT uMsg, WPARAM wParam , LPARAM lParam, BOOL& b
 
 void CWebBrowser::OnNewWindow2(IDispatch **ppDisp, VARIANT_BOOL *Cancel) {
 	// ATLTRACE("NewWindow2\n");
-	CWebBrowser* newWebBrowser = new CWebBrowser(NULL);
-	RECT rc = {0};
-
+	CWebBrowser* newWebBrowser = CPlugin::browserPool->AddNew();
 	// FIXME: what will happen if the top level parent is destroyed before we have a new tab?
-	HWND hwnd = newWebBrowser->Create(GetTopLevelParent(), rc);
-	if(hwnd) {
-		// (*newWebBrowser)->QueryInterface(IID_IDispatch, (void**)ppDisp);
+	if(newWebBrowser) {
 		(*newWebBrowser)->get_Application(ppDisp);
-		CPlugin::browserPool.AddTail(newWebBrowser);
 		if(m_Plugin) {
 			m_Plugin->NewTab(newWebBrowser);
 		}
 	}
-	else
-		delete newWebBrowser;
 }
 
 void CWebBrowser::OnBeforeNavigate2(IDispatch *pDisp, VARIANT *url, VARIANT *Flags, VARIANT *TargetFrameName, VARIANT *PostData, VARIANT *Headers, VARIANT_BOOL *Cancel) {

@@ -95,3 +95,6 @@ The npruntime code included in IE Tab already applied the following changes.
    So, these two header files might not be needed.
 
 7. For better readability, I moved ScriptablePluginObject stuff to its own cpp file.
+
+8. I called CPlugin::GlobalInit() and CPlugin::GlobalDestroy() in NP_Initialize() and
+   NP_Shutdown().

@@ -6,6 +6,13 @@ function getIeTab() {
 	return document.getElementById("ietab");
 }
 
+function getPageArgUrl() {
+	var m=/(\?url=)(\S+)$/.exec(document.location.href);
+	if(m)
+		return decodeURI(m[2]);
+	return "";
+}
+
 var IeTabCallback = {
 	ready: function() {
 		// FIXME: this does not work yet, not implemented.
@@ -19,10 +26,8 @@ var IeTabCallback = {
 			// We store this value to window.browser_id property of the new window.
 			// Then the plugin will read the value from window.browser_id to get it and
 			// it will show that browser control instead of creating a new one.
-			var new_win = window.open("about:blank");
-			new_win.browser_id = url;
-			// now load the container page in a new window
-			new_win.document.location = document.location;
+			var new_url = document.location + "?url=" + url;
+			var new_win = window.open(new_url);
 		}
 		else {
 			// this is a plain URL string, load it.
@@ -122,9 +127,13 @@ function go_to_url() {
 }
 
 function onload() {
-	if(window.browser_id) // delete the property to save some memory
-		delete window.browser_id;
-	document.getElementById("url").value = "http://www.google.com.tw/";
+	var url = getPageArgUrl();
+	if(url != "") {
+		document.getElementById("url").value = url;
+		go_to_url();
+	}
+	else
+		document.getElementById("url").value = "http://www.google.com.tw/";
 }
 
 </script>
@@ -145,12 +154,12 @@ function onload() {
 <input size="32" id="statusbar" />
 <br />
 URL: <input size="80" id="url" />
-<button onclick="getIeTab().navigate('http://www.google.com.tw/');">Google</button>
 <button onclick="go_to_url();">Go</button>
 <button onclick="getIeTab().saveAs();">SaveAs</button>
 <button onclick="getIeTab().print();">Print</button>
 <button onclick="getIeTab().printSetup();">PrintSetup</button>
 <button onclick="getIeTab().printPreview();">Preview</button>
+<button onclick="getIeTab().navigate('http://www.google.com.tw/');">Google</button>
 <hr />
 
 <object type="application/x-ietab" width="100%" height="90%" id="ietab"></object>

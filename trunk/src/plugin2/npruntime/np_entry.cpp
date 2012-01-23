@@ -47,6 +47,8 @@
 #include "npapi.h"
 #include "npfunctions.h"
 
+#include "plugin.h"
+
 #ifndef HIBYTE
 #define HIBYTE(x) ((((uint32)(x)) & 0xff00) >> 8)
 #endif
@@ -182,13 +184,16 @@ NP_Initialize(NPNetscapeFuncs* pFuncs
   pluginFuncs->javaClass  = NPP_GetJavaClass();
 #endif
 
-  NPP_Initialize();
 #endif
+
+  CPlugin::GlobalInit();
 
   return NPERR_NO_ERROR;
 }
 
 NPError OSCALL NP_Shutdown()
 {
+  CPlugin::GlobalDestroy();
+
   return NPERR_NO_ERROR;
 }

@@ -162,6 +162,9 @@
 			<File
 				RelativePath=".\WebBrowserHost.cpp">
 			</File>
+			<File
+				RelativePath=".\WebBrowserPool.cpp">
+			</File>
 		</Filter>
 		<Filter
 			Name="¼ÐÀYÀÉ"
@@ -184,6 +187,9 @@
 			</File>
 			<File
 				RelativePath=".\WebBrowserHost.h">
+			</File>
+			<File
+				RelativePath=".\WebBrowserPool.h">
 			</File>
 		</Filter>
 		<Filter
