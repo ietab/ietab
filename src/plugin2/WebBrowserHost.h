@@ -1,5 +1,6 @@
 //
-// CustomClientSite.h: Custom OLE client site for the web browser control.
+// WebBrowserHost.h: Subclass CAxHostWindow to create a specialized
+// control host to provide IOleCommandTarget and IDocHostUIHandler.
 //
 // Copyright (C) 2012 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
 //
@@ -18,62 +19,44 @@
 //
 
 #pragma once
+
 #include <atlbase.h>
-#include <atlcom.h>
-#include "oleidl.h"
-#include <mshtmhst.h>
+#include <atlhost.h>
 
-class ATL_NO_VTABLE CCustomClientSite :
-	public CComObjectRootEx<CComMultiThreadModel>,
-	public IOleClientSite,
-	public IDocHostUIHandler,
-	public IOleCommandTarget,
-	public IServiceProviderImpl<CCustomClientSite> {
+
+class ATL_NO_VTABLE CWebBrowserHost :
+	//public CComCoClass<CWebBrowserHost , &CLSID_NULL>,
+	public CAxHostWindow,
+	public IOleCommandTarget
+{
 public:
-	CCustomClientSite(void);
-	virtual ~CCustomClientSite(void);
+	CWebBrowserHost(void);
+	~CWebBrowserHost(void);
 
-	BEGIN_COM_MAP(CCustomClientSite)
-		COM_INTERFACE_ENTRY(IOleClientSite)
+	// DECLARE_WND_SUPERCLASS(_T("IETabHost"), CAxWindow::GetWndClassName())
+	DECLARE_PROTECT_FINAL_CONSTRUCT()
+
+	DECLARE_NO_REGISTRY()
+	DECLARE_POLY_AGGREGATABLE(CWebBrowserHost)
+	DECLARE_GET_CONTROLLING_UNKNOWN()
+
+	BEGIN_COM_MAP(CWebBrowserHost)
 		COM_INTERFACE_ENTRY(IDocHostUIHandler)
-		COM_INTERFACE_ENTRY(IOleCommandTarget)
-		COM_INTERFACE_ENTRY(IServiceProvider)
+		// COM_INTERFACE_ENTRY(IOleCommandTarget)
+		COM_INTERFACE_ENTRY_CHAIN(CAxHostWindow)
 	END_COM_MAP()
-
-	BEGIN_SERVICE_MAP(CCustomClientSite)
-	END_SERVICE_MAP()
-
-	// IOleClientSite
-	STDMETHOD(SaveObject)(void) {
-		return E_NOTIMPL;
-	}
-	STDMETHOD(GetMoniker)(DWORD nAssign, DWORD nWhichMoniker, IMoniker **ppMoniker) {
-		return E_NOTIMPL;
-	}
-	STDMETHOD(GetContainer)(IOleContainer **ppContainer) {
-		*ppContainer = NULL;
-		return E_NOINTERFACE;
-	}
-	STDMETHOD(ShowObject)(void) {
-		return S_OK;
-	}
-	STDMETHOD(OnShowWindow)(BOOL fShow) {
-		return S_OK;
-	}
-	STDMETHOD(RequestNewObjectLayout)(void) {
-		return E_NOTIMPL;
-	}
 
 	// IDocHostUIHandler
 	STDMETHOD(GetHostInfo)(DOCHOSTUIINFO FAR* pInfo);
 	STDMETHOD(TranslateAccelerator)(LPMSG lpMsg, const GUID FAR* pguidCmdGroup, DWORD nCmdID) {
-		return S_FALSE;
+		return E_NOTIMPL;
 	}
 	STDMETHOD(GetExternal)(IDispatch** ppDispatch) {
 		return E_NOTIMPL;
 	}
 	STDMETHOD(ShowContextMenu)(DWORD dwID, POINT FAR* ppt, IUnknown FAR* pcmdtReserved, IDispatch FAR* pdispReserved) { 
-		return S_FALSE;
+		return E_NOTIMPL;
+		// return S_FALSE;
 	}
 	STDMETHOD(ShowUI)(DWORD dwID, IOleInPlaceActiveObject FAR* pActiveObject,
 		IOleCommandTarget FAR* pCommandTarget,
@@ -123,4 +106,8 @@ public:
 		/* [unique][in] */ VARIANT *pvaIn,
 		/* [unique][out][in] */ VARIANT *pvaOut);
 
+	static HRESULT CWebBrowserHost::AxCreateControlLicEx(LPCOLESTR lpszName, HWND hWnd, IStream* pStream, 
+		IUnknown** ppUnkContainer, IUnknown** ppUnkControl, REFIID iidSink, IUnknown* punkSink, BSTR bstrLic);
+
 };
+

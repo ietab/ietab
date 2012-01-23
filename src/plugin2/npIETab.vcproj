@@ -139,9 +139,6 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath=".\CustomClientSite.cpp">
-			</File>
-			<File
 				RelativePath=".\npruntime\np_entry.cpp">
 			</File>
 			<File
@@ -162,14 +159,14 @@
 			<File
 				RelativePath=".\WebBrowser.cpp">
 			</File>
+			<File
+				RelativePath=".\WebBrowserHost.cpp">
+			</File>
 		</Filter>
 		<Filter
 			Name="¼ÐÀYÀÉ"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
-			<File
-				RelativePath=".\CustomClientSite.h">
-			</File>
 			<File
 				RelativePath=".\NPObjectPtr.h">
 			</File>
@@ -184,6 +181,9 @@
 			</File>
 			<File
 				RelativePath=".\WebBrowser.h">
+			</File>
+			<File
+				RelativePath=".\WebBrowserHost.h">
 			</File>
 		</Filter>
 		<Filter
