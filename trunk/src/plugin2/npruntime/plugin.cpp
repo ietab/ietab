@@ -64,6 +64,7 @@ CPlugin::CPlugin(NPP pNPInstance) :
 	m_SecureLockIcon(0),
 	lpOldProc(NULL) {
 
+	m_ThreadId = GetCurrentThreadId();
 }
 
 CPlugin::~CPlugin() {
@@ -111,7 +112,7 @@ NPBool CPlugin::Init(NPWindow* pNPWindow) {
 	//       we create it in Navigate() on demand, which in turns calls InitBrowser()
 
 	// Tell the world that we're ready for use!
-	if(m_pCallbackObject) {
+	if(m_pCallbackObject && IsMainThread()) {
 		//FIXME: this won't be called :-(
 		m_pCallbackObject.Invoke(m_pNPInstance, "ready", NULL, "v");
 	}
@@ -241,7 +242,7 @@ char* CPlugin::GetTitle() {
 // utility methods
 
 void CPlugin::UpdateLocation(BSTR url) {
-	if(m_pCallbackObject) {
+	if(m_pCallbackObject && IsMainThread()) {
 		// char* location = Bstr2Utf8(url);
 		// FIXME: why url is "about:blank" even when there is a page loaded sometimes?
 		char* location = GetUrl();
@@ -251,7 +252,7 @@ void CPlugin::UpdateLocation(BSTR url) {
 }
 
 void CPlugin::UpdateTitle(BSTR text) {
-	if(m_pCallbackObject) {
+	if(m_pCallbackObject && IsMainThread()) {
 		static NPIdentifier setTitle_id;
 		if(setTitle_id == 0)
 			setTitle_id = NPN_GetStringIdentifier("setTitle");
@@ -265,7 +266,7 @@ void CPlugin::UpdateProgress(long progress) {
 	if(m_Progress != progress) {
 		m_Progress = progress;
 
-		if(m_pCallbackObject) {
+		if(m_pCallbackObject && IsMainThread()) {
 			static NPIdentifier setProgress_id = 0;
 			if(setProgress_id == 0)
 				setProgress_id = NPN_GetStringIdentifier("setProgress");
@@ -278,7 +279,7 @@ void CPlugin::UpdateStatusText(BSTR status) {
 	// (*m_pWebBrowser)->get_StatusText();
 	char* text = Bstr2Utf8(status);
 	// NPN_Status(m_pNPInstance, text);
-	if(m_pCallbackObject) {
+	if(m_pCallbackObject && IsMainThread()) {
 		static NPIdentifier setStatusText_id = 0;
 		if(setStatusText_id == 0)
 			setStatusText_id = NPN_GetStringIdentifier("setStatusText");
@@ -291,7 +292,7 @@ void CPlugin::UpdateSecureLockIcon(long icon_id) {
 	if(m_SecureLockIcon != icon_id) {
 		// notify the javascript part
 		m_SecureLockIcon = icon_id;
-		if(m_pCallbackObject) {
+		if(m_pCallbackObject && IsMainThread()) {
 			static NPIdentifier setSecurityIcon_id = 0;
 			if(setSecurityIcon_id == 0)
 				setSecurityIcon_id = NPN_GetStringIdentifier("setSecurityIcon");
@@ -301,7 +302,7 @@ void CPlugin::UpdateSecureLockIcon(long icon_id) {
 }
 
 void CPlugin::NewTab(const char* url) {
-	if(m_pCallbackObject) {
+	if(m_pCallbackObject && IsMainThread()) {
 		m_pCallbackObject.Invoke(m_pNPInstance, "newTab", NULL, "vs", url);
 	}
 }
@@ -313,7 +314,7 @@ void CPlugin::NewTab(CWebBrowser* newWebBrowser) {
 }
 
 void CPlugin::CloseTab() {
-	if(m_pCallbackObject) {
+	if(m_pCallbackObject && IsMainThread()) {
 		m_pCallbackObject.Invoke(m_pNPInstance, "closeTab", NULL, "v");
 	}
 }
