@@ -489,10 +489,7 @@ bool
 ScriptablePluginObject::InvokeDefault(const NPVariant *args, uint32_t argCount,
                                       NPVariant *result)
 {
-    printf ("ScriptablePluginObject default method called!\n");
-
-    STRINGZ_TO_NPVARIANT(strdup("default method return val"), *result);
-
+    VOID_TO_NPVARIANT(*result);
     return true;
 }
 

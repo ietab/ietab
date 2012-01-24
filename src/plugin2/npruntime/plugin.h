@@ -79,6 +79,12 @@ public:
 
 	bool IsInitialized(); // check if the plugin is initialized
 
+	bool IsMainThread() {
+		bool ret = GetCurrentThreadId() == m_ThreadId;
+		ATLASSERT(ret == true);
+		return ret;
+	}
+
 	CWebBrowser* GetWebBrowser() {
 		return m_pWebBrowser;
 	}
@@ -328,6 +334,7 @@ private:
 	long m_SecureLockIcon;
     CWebBrowser* m_pWebBrowser;
 	WNDPROC lpOldProc; // old window proc of the Gecko plugin window
+	DWORD m_ThreadId;
 };
 
 #endif // __PLUGIN_H__
