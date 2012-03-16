@@ -356,7 +356,7 @@ IeTab.prototype.loadFromFile = function() {
 
 IeTab.prototype.getAllSettings = function(isDefault) {
    var prefservice = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);
-   var prefs = (isDefault ? prefservice.getDefaultBranch("") : prefservice.getBranch("") );
+   var prefs = (isDefault ? prefservice.getDefaultBranch("extensions.") : prefservice.getBranch("extensions.") );
    var preflist = prefs.getChildList("ietab.", {});
 
    var aList = ["IETabPref"];
@@ -386,7 +386,7 @@ IeTab.prototype.setAllSettings = function(aList) {
    if (aList[0] != "IETabPref") return;
 
    var prefservice = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);
-   var prefs = prefservice.getBranch("");
+   var prefs = prefservice.getBranch("extensions.");
 
    var aPrefs = [];
    for (var i = 1 ; i < aList.length ; i++){

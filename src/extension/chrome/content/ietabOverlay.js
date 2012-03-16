@@ -1,22 +1,4 @@
-/*
- * Copyright (c) 2005 yuoo2k <yuoo2k@gmail.com>
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- *
- */
-const gIeTabChromeStr = "chrome://ietab/content/reloaded.html?url=";
+const gIeTabChromeStr = "chrome://ietab/content/ietab.xul#";
 
 IeTab.prototype.QueryInterface = function(aIID) {
    if (aIID.equals(Components.interfaces.nsIIeTab) || aIID.equals(Components.interfaces.nsISupports))
@@ -44,8 +26,8 @@ IeTab.prototype.getIeTabTrimURL = function(url) {
 IeTab.prototype.getIeTabElmt = function(aTab) {
    var aBrowser = (aTab ? aTab.linkedBrowser : gBrowser);
    if (aBrowser && aBrowser.currentURI && gIeTab.startsWith(aBrowser.currentURI.spec, gIeTabChromeStr)) {
-      if (aBrowser.contentDocument && aBrowser.contentDocument.getElementById('IETab')){
-         var obj = aBrowser.contentDocument.getElementById('IETab');
+      if (aBrowser.contentDocument && aBrowser.contentDocument.getElementById('ietab-plugin')){
+         var obj = aBrowser.contentDocument.getElementById('ietab-plugin');
          return (obj.wrappedJSObject ? obj.wrappedJSObject : obj);
       }
    }
@@ -312,7 +294,7 @@ IeTab.prototype.updateSecureLockIcon = function() {
       var state = (gIeTab.startsWith(url, "https://") ? wpl.STATE_IS_SECURE | wpl.STATE_SECURE_HIGH : wpl.STATE_IS_INSECURE);
       window.XULBrowserWindow.onSecurityChange(null, null, state);
       var securityButton = document.getElementById("security-button");
-      securityButton.setAttribute("label", gIeTab.getUrlHost(ietab.url));
+      if (securityButton) securityButton.setAttribute("label", gIeTab.getUrlHost(ietab.url));
    }
 }
 
@@ -572,7 +554,7 @@ IeTab.prototype.createTabbarMenu = function() {
    tabbarMenu.insertBefore(document.getElementById("ietab-tabbar-switch"), separator);
    tabbarMenu.insertBefore(document.getElementById("ietab-tabbar-extapp"), separator);
    //disable toolbar menuitem tooltip
-   gIeTab.hookAttr(gBrowser.mStrip.firstChild, "onpopupshowing", "if (document.tooltipNode.localName != 'tab') return false;");
+   //gIeTab.hookAttr(gBrowser.mStrip.firstChild, "onpopupshowing", "if (document.tooltipNode.localName != 'tab') return false;");
 }
 
 IeTab.prototype.getTitleEnding = function(oldModifier) {
@@ -600,8 +582,8 @@ IeTab.prototype.assignJSObject = function(aDoc) {
    if (aDoc instanceof HTMLDocument) {
       var aBrowser = getBrowser().getBrowserForDocument(aDoc);
       if (aBrowser && aBrowser.currentURI && aBrowser.currentURI.spec.indexOf(gIeTabChromeStr) == 0) {
-         if (aDoc && aDoc.getElementById('IETab')) {
-            var ietab = aDoc.getElementById('IETab');
+         if (aDoc && aDoc.getElementById('ietab-plugin')) {
+            var ietab = aDoc.getElementById('ietab-plugin');
             if (ietab.wrappedJSObject) ietab = ietab.wrappedJSObject;
             ietab.requestTarget = gIeTab;
          }
@@ -619,7 +601,7 @@ IeTab.prototype.getCurrentIeTabURI = function(aBrowser) {
       var docShell = aBrowser.boxObject.QueryInterface(Components.interfaces.nsIBrowserBoxObject).docShell;
       var wNav = docShell.QueryInterface(Components.interfaces.nsIWebNavigation);
       if (wNav.currentURI && wNav.currentURI.spec.indexOf(gIeTabChromeStr) == 0) {
-         var ietab = wNav.document.getElementById("IETab");
+         var ietab = wNav.document.getElementById("ietab-plugin");
          if (ietab) {
             if (ietab.wrappedJSObject) ietab = ietab.wrappedJSObject;
             var url = ietab.url;
@@ -667,8 +649,8 @@ IeTab.prototype.hookURLBarSetter = function(aURLBar) {
 }
 
 IeTab.prototype.checkFilter = function(aBrowser, aRequest, aLocation) {
-   var ietabwatch = Components.classes["@mozilla.org/ietabwatch;1"].getService().wrappedJSObject;
-   if (ietabwatch && ietabwatch.shouldFilter(aLocation.spec)) {
+   var ietabfilter = Components.classes["@mozilla.org/ietabfilter;1"].getService().wrappedJSObject;
+   if (ietabfilter && ietabfilter.shouldFilter(aLocation.spec)) {
       aRequest.cancel(0x804b0002); //NS_BINDING_ABORTED
       aBrowser.loadURI(aLocation.spec);
    }
@@ -682,10 +664,10 @@ IeTab.prototype.hookCodeAll = function() {
    //hook functions
    gIeTab.hookCode("gFindBar._onBrowserKeypress", "this._useTypeAheadFind &&", "$& !gIeTab.isIeEngine() &&");
    gIeTab.hookCode("PlacesCommandHook.bookmarkPage", "aBrowser.currentURI", "makeURI(gIeTab.getIeTabTrimURL($&.spec))");
-   gIeTab.hookCode("PlacesStarButton.updateState", "getBrowser().currentURI", "makeURI(gIeTab.getIeTabTrimURL($&.spec))");
+   //gIeTab.hookCode("PlacesStarButton.updateState", "getBrowser().currentURI", "makeURI(gIeTab.getIeTabTrimURL($&.spec))");
    gIeTab.hookCode("gBrowser.addTab", "return t;", "gIeTab.hookBrowserGetter(t.linkedBrowser); $&");
-   gIeTab.hookCode("nsBrowserAccess.prototype.openURI", "var loadflags = isExternal ?", "var loadflags = false ?");
-   gIeTab.hookCode("gBrowser.updateTitlebar", 'docElement.getAttribute("titlemodifier")', 'gIeTab.getTitleEnding($&)');
+   //gIeTab.hookCode("nsBrowserAccess.prototype.openURI", "var loadflags = isExternal ?", "var loadflags = false ?");
+   //gIeTab.hookCode("gBrowser.updateTitlebar", 'docElement.getAttribute("titlemodifier")', 'gIeTab.getTitleEnding($&)');
    gIeTab.hookCode("gBrowser.setTabTitle", "if (browser.currentURI.spec) {", "$& if (browser.currentURI.spec.indexOf(gIeTabChromeStr) == 0) return;");
    gIeTab.hookCode("URLBarSetURI", "getWebNavigation()", "getBrowser()");
    gIeTab.hookCode("getShortcutOrURI", /return (\S+);/g, "return gIeTab.getHandledURL($1);");

@@ -1,30 +1,30 @@
-pref("ietab.filter", true);
-pref("ietab.filterlist", "/^file:\/\/\/.*\.(mht|mhtml)$/ http://*update.microsoft.com/* http://www.windowsupdate.com/*");
+pref("extensions.ietab.filter", true);
+pref("extensions.ietab.filterlist", "/^file:\/\/\/.*\.(mht|mhtml)$/ http://*update.microsoft.com/* http://www.windowsupdate.com/*");
 
-pref("ietab.toolsmenu", true);
-pref("ietab.toolsmenu.icon", false);
-pref("ietab.statusbar", true);
+pref("extensions.ietab.toolsmenu", true);
+pref("extensions.ietab.toolsmenu.icon", false);
+pref("extensions.ietab.statusbar", true);
 
-pref("ietab.handleUrlBar", false);
-pref("ietab.alwaysNewTab", false);
-pref("ietab.focustab", true);
-pref("ietab.handleBookmarkURL", true);
+pref("extensions.ietab.handleUrlBar", false);
+pref("extensions.ietab.alwaysNewTab", false);
+pref("extensions.ietab.focustab", true);
+pref("extensions.ietab.handleBookmarkURL", true);
 
-pref("ietab.pagelink", true);
-pref("ietab.bookmark", true);
-pref("ietab.tabsmenu", true);
+pref("extensions.ietab.pagelink", true);
+pref("extensions.ietab.bookmark", true);
+pref("extensions.ietab.tabsmenu", true);
 
-pref("ietab.pagelink.extapp", true);
-pref("ietab.bookmark.extapp", true);
-pref("ietab.tabsmenu.extapp", true);
+pref("extensions.ietab.pagelink.extapp", true);
+pref("extensions.ietab.bookmark.extapp", true);
+pref("extensions.ietab.tabsmenu.extapp", true);
 
-pref("ietab.icon.pagelink", false);
-pref("ietab.icon.tabsmenu", false);
-pref("ietab.icon.bookmark", false);
+pref("extensions.ietab.icon.pagelink", false);
+pref("extensions.ietab.icon.tabsmenu", false);
+pref("extensions.ietab.icon.bookmark", false);
 
-pref("ietab.ctrlclick", true);
-pref("ietab.extAppPath", "");
-pref("ietab.extAppParam", "%1");
+pref("extensions.ietab.ctrlclick", true);
+pref("extensions.ietab.extAppPath", "");
+pref("extensions.ietab.extAppParam", "%1");
 
-pref("ietab.titleEnding", "");
-pref("ietab.intl.charset.default", "");
+pref("extensions.ietab.titleEnding", "");
+pref("extensions.ietab.intl.charset.default", "");
