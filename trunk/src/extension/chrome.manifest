@@ -4,14 +4,13 @@ skin	ietab classic/1.0 chrome/skin/
 overlay	chrome://browser/content/browser.xul chrome://ietab/content/ietabOverlay.xul
 style	chrome://global/content/customizeToolbar.xul chrome://ietab/skin/ietab.css
 
-locale	ietab	af-ZA	chrome/locale/af-ZA/
-locale	ietab	ar		chrome/locale/ar/
-locale	ietab	be-BY	chrome/locale/be-BY/
-locale	ietab	bg-BG	chrome/locale/bg-BG/
-locale	ietab	ca-AD	chrome/locale/ca-AD/
-locale	ietab	cs-CZ	chrome/locale/cs-CZ/
-locale	ietab	da-DK	chrome/locale/da-DK/
-locale	ietab	de-DE	chrome/locale/de-DE/
+component {7f22eb55-29b0-49f1-beb8-12744891aab7} components/nsIeTabProtocolHandler.js
+contract @mozilla.org/network/protocol;1?name=ie {7f22eb55-29b0-49f1-beb8-12744891aab7}
+
+component {3fdaa104-5988-4050-94fc-c711d568fe64} components/nsIeTabContentPolicyHandler.js
+contract @mozilla.org/ietabfilter;1 {3fdaa104-5988-4050-94fc-c711d568fe64}
+category content-policy IeTabContentPolicy @mozilla.org/ietabfilter;1
+
 locale	ietab	en-US	chrome/locale/en-US/
 locale	ietab	es-AR	chrome/locale/es-AR/
 locale	ietab	es-ES	chrome/locale/es-ES/

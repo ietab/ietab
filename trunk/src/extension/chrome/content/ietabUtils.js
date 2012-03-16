@@ -68,7 +68,7 @@ IeTab.prototype.startsWith = function(s, prefix) {
 IeTab.prototype.getBoolPref = function(prefName, defval) {
    var result = defval;
    var prefservice = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);
-   var prefs = prefservice.getBranch("");
+   var prefs = prefservice.getBranch("extensions.");
    if (prefs.getPrefType(prefName) == prefs.PREF_BOOL) {
        try { result = prefs.getBoolPref(prefName); }catch(e){}
    }
@@ -78,7 +78,7 @@ IeTab.prototype.getBoolPref = function(prefName, defval) {
 IeTab.prototype.getIntPref = function(prefName, defval) {
    var result = defval;
    var prefservice = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);
-   var prefs = prefservice.getBranch("");
+   var prefs = prefservice.getBranch("extensions.");
    if (prefs.getPrefType(prefName) == prefs.PREF_INT) {
        try { result = prefs.getIntPref(prefName); }catch(e){}
    }
@@ -88,7 +88,7 @@ IeTab.prototype.getIntPref = function(prefName, defval) {
 IeTab.prototype.getStrPref = function(prefName, defval) {
    var result = defval;
    var prefservice = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);
-   var prefs = prefservice.getBranch("");
+   var prefs = prefservice.getBranch("extensions.");
    if (prefs.getPrefType(prefName) == prefs.PREF_STRING) {
        try { result = prefs.getComplexValue(prefName, Components.interfaces.nsISupportsString).data; }catch(e){}
    }
@@ -99,19 +99,19 @@ IeTab.prototype.getStrPref = function(prefName, defval) {
 
 IeTab.prototype.setBoolPref = function(prefName, value) {
    var prefservice = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);
-   var prefs = prefservice.getBranch("");
+   var prefs = prefservice.getBranch("extensions.");
    try { prefs.setBoolPref(prefName, value); } catch(e){}
 }
 
 IeTab.prototype.setIntPref = function(prefName, value) {
    var prefservice = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);
-   var prefs = prefservice.getBranch("");
+   var prefs = prefservice.getBranch("extensions.");
    try { prefs.setIntPref(prefName, value); } catch(e){}
 }
 
 IeTab.prototype.setStrPref = function(prefName, value) {
    var prefservice = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);
-   var prefs = prefservice.getBranch("");
+   var prefs = prefservice.getBranch("extensions.");
    var sString = Components.classes["@mozilla.org/supports-string;1"].createInstance(Components.interfaces.nsISupportsString);
    sString.data = value;
    try { prefs.setComplexValue(prefName, Components.interfaces.nsISupportsString, sString); } catch(e){}

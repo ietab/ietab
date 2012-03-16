@@ -1,0 +1,22 @@
+<?xml version='1.0'?>
+
+<window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+		xmlns:html="http://www.w3.org/1999/xhtml">
+
+<html:link rel="icon" href="chrome://ietab/skin/ietab-favicon-iedoc.png" style="display:none" />
+<html:embed type="application/x-ietab" id="ietab-plugin" style="-moz-box-flex:1;" />
+
+<script src="chrome://ietab/content/ietabCallback.js" />
+<script>
+window.onpageshow = function(e) {
+	var m = /#(\S+)$/.exec(location.href);
+	if (m) {
+		var url = decodeURI(m[1]);
+		var plugin = document.getElementById("ietab-plugin");
+		plugin.callbacks = document.IeTabCallback;
+		plugin.navigate(url);
+	}
+}
+</script>
+
+</window>
