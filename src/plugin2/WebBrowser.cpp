@@ -219,6 +219,13 @@ void CWebBrowser::OnNewWindow2(IDispatch **ppDisp, VARIANT_BOOL *Cancel) {
 
 void CWebBrowser::OnBeforeNavigate2(IDispatch *pDisp, VARIANT *url, VARIANT *Flags, VARIANT *TargetFrameName, VARIANT *PostData, VARIANT *Headers, VARIANT_BOOL *Cancel) {
 	// ATLTRACE("BeforeNavigage\n");
+	CComBSTR location = url->bstrVal;
+	if(location == "ietab:switchback") { // switch back to firefox
+		*Cancel = true;
+		if(m_Plugin) {
+			m_Plugin->SwitchBackToFirefox();
+		}
+	}
 }
 
 
@@ -246,11 +253,6 @@ void CWebBrowser::OnNavigateComplete2(IDispatch* pDisp,  VARIANT* URL) {
 	}
 }
 
-void CWebBrowser::OnDocumentComplete(IDispatch *pDisp, VARIANT *URL) {
-	// ATLTRACE("DocumentComplete\n");
-}
-
-
 void CWebBrowser::OnProgressChange(long Progress, long ProgressMax) {
 	long percent;
 	if(ProgressMax > 0) {
@@ -268,8 +270,9 @@ void CWebBrowser::OnSetSecureLockIcon(long SecureLockIcon) {
 }
 
 void CWebBrowser::OnStatusTextChange(BSTR Text) {
-	if(m_Plugin)
+	if(m_Plugin) {
 		m_Plugin->UpdateStatusText(Text);
+	}
 }
 
 void CWebBrowser::OnTitleChange(BSTR Text) {
