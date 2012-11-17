@@ -42,7 +42,7 @@ public:
 
 	BEGIN_COM_MAP(CWebBrowserHost)
 		COM_INTERFACE_ENTRY(IDocHostUIHandler)
-		// COM_INTERFACE_ENTRY(IOleCommandTarget)
+		COM_INTERFACE_ENTRY(IOleCommandTarget)
 		COM_INTERFACE_ENTRY_CHAIN(CAxHostWindow)
 	END_COM_MAP()
 
