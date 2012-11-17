@@ -80,7 +80,6 @@ private:
 
 	BEGIN_SINK_MAP(CWebBrowser)
 		SINK_ENTRY(0, DISPID_BEFORENAVIGATE2, OnBeforeNavigate2)
-		SINK_ENTRY(0, DISPID_DOCUMENTCOMPLETE, OnDocumentComplete)
 		SINK_ENTRY(0, DISPID_NAVIGATECOMPLETE2, OnNavigateComplete2)
 		SINK_ENTRY(0, DISPID_NEWWINDOW2, OnNewWindow2)
 		SINK_ENTRY(0, DISPID_PROGRESSCHANGE, OnProgressChange)
@@ -94,7 +93,6 @@ private:
 	void __stdcall OnNewWindow2(IDispatch **ppDisp, VARIANT_BOOL *Cancel);
 	void __stdcall OnBeforeNavigate2(IDispatch *pDisp, VARIANT *url, VARIANT *Flags, VARIANT *TargetFrameName, VARIANT *PostData, VARIANT *Headers, VARIANT_BOOL *Cancel);
 	void __stdcall OnNavigateComplete2(IDispatch* pDisp,  VARIANT* URL);
-	void __stdcall OnDocumentComplete(IDispatch *pDisp, VARIANT *URL);
 	void __stdcall OnProgressChange(long Progress, long ProgressMax);
 	void __stdcall OnSetSecureLockIcon(long SecureLockIcon);
 	void __stdcall OnStatusTextChange(BSTR Text);

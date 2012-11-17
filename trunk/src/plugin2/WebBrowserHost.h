@@ -54,10 +54,9 @@ public:
 	STDMETHOD(GetExternal)(IDispatch** ppDispatch) {
 		return E_NOTIMPL;
 	}
-	STDMETHOD(ShowContextMenu)(DWORD dwID, POINT FAR* ppt, IUnknown FAR* pcmdtReserved, IDispatch FAR* pdispReserved) { 
-		return E_NOTIMPL;
-		// return S_FALSE;
-	}
+
+	STDMETHOD(ShowContextMenu)(DWORD dwID, POINT FAR* ppt, IUnknown* pcmdTarget, IDispatch* pdispObject);
+
 	STDMETHOD(ShowUI)(DWORD dwID, IOleInPlaceActiveObject FAR* pActiveObject,
 		IOleCommandTarget FAR* pCommandTarget,
 		IOleInPlaceFrame  FAR* pFrame,

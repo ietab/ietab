@@ -49,6 +49,7 @@
 #include <atlwin.h>
 #include <atlstr.h>
 #include <atlcoll.h> // for CAtlList
+#include <comutil.h> // for _bstr_t
 
 #include <mshtmcid.h>
 
@@ -59,6 +60,8 @@
 
 class CPlugin
 {
+friend class ScriptablePluginObject;
+
 public:
 	static CWebBrowserPool* browserPool;
 
@@ -250,17 +253,31 @@ public:
 
 	char* GetUrl(); // returns a UTF-8 string newly-allocated with NPN_MemAlloc()
     char* GetTitle(); // returns a UTF-8 string newly-allocated with NPN_MemAlloc()
+	char* GetStatusText(); // returns a UTF-8 string newly-allocated with NPN_MemAlloc()
 
 	// other utility methods
+
 	void UpdateLocation(BSTR url);
+	void OnUpdateLocation();
+
 	void UpdateTitle(BSTR text);
+	void OnUpdateTitle();
+
 	void UpdateProgress(long progress);
+	void OnUpdateProgress(long progress);
+
 	void UpdateStatusText(BSTR status);
+	void OnUpdateStatusText();
+
 	void UpdateSecureLockIcon(long icon_id);
+	void OnUpdateSecureLockIcon(long icon_id);
 
 	void NewTab(const char* url);
 	void NewTab(CWebBrowser* newWebBrowser);
+	void OnNewTab();
+
 	void CloseTab();
+	void OnCloseTab();
 
 	bool FilterKeyPress(int keyCode, bool isAltDown, bool isCtrlDown, bool isShiftDown) {
 		bool ret = false;
@@ -273,6 +290,9 @@ public:
 		}
 		return ret;
 	}
+
+	void SwitchBackToFirefox();
+	void OnSwitchBackToFirefox();
 
 	HWND GetHwnd() {
 		return m_hWnd;
@@ -322,6 +342,19 @@ protected:
 
 	static LRESULT CALLBACK PluginWinProc(HWND, UINT, WPARAM, LPARAM);
 
+	static void doUpdateStatusText(CPlugin* plugin);
+
+	// NPObject functions redirected from ScriptablePluginObject
+    bool HasMethod(NPIdentifier name);
+    bool HasProperty(NPIdentifier name);
+    bool GetProperty(NPIdentifier name, NPVariant *result);
+	bool SetProperty(NPIdentifier name, const NPVariant *value);
+    bool Invoke(NPIdentifier name, const NPVariant *args,
+                uint32_t argCount, NPVariant *result);
+    bool InvokeDefault(const NPVariant *args, uint32_t argCount,
+                               NPVariant *result);
+	static void RegisterIdentifiers();
+
 private:
     NPP m_pNPInstance;
     HWND m_hWnd;
@@ -335,6 +368,8 @@ private:
     CWebBrowser* m_pWebBrowser;
 	WNDPROC lpOldProc; // old window proc of the Gecko plugin window
 	DWORD m_ThreadId;
+
+	CComBSTR m_StatusText;
 };
 
 #endif // __PLUGIN_H__

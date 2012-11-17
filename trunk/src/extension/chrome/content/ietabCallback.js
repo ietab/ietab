@@ -82,6 +82,10 @@ var IeTabCallback = {
 		// FIXME: this does not work yet
 	},
 
+	switchBackToFirefox: function() {
+		// TODO: switch current IeTab back to Firefox.
+	},
+
 	// check if the browser needs to handle the key press event
 	filterKeyPress: function(keyCode, isAltDown, isCtrlDown, isShiftDown) {
 		if(isAltDown) {

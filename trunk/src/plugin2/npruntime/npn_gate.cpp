@@ -337,3 +337,10 @@ void NPN_SetException(NPObject* obj, const NPUTF8 *message)
 {
   NPNFuncs.setexception(obj, message);
 }
+
+// The function is missing from the original plugin sample provided by mozilla.
+// FIXED according to: http://forums.mozillazine.org/viewtopic.php?f=27&t=1793635
+void NPN_PluginThreadAsyncCall(NPP plugin, void (*func)(void *), void *userData)
+{
+  NPNFuncs.pluginthreadasynccall(plugin, func, userData);
+}
