@@ -5,10 +5,10 @@
 
    <em:id>{77b819fa-95ad-4f2c-ac7c-486b356188a9}</em:id>
    <em:name>IE Tab</em:name>
-   <em:version>2.0.20120203</em:version>
+   <em:version>3.0.20121119</em:version>
    <em:description>Enables you to use the embedded IE engine within Mozilla/Firefox.</em:description>
    <em:creator>Hong Jen Yee (PCMan)</em:creator>
-   <em:developer>yuoo2k</em:developer>
+   <em:creator>yuoo2k</em:creator>
    <em:homepageURL>https://addons.mozilla.org/firefox/addon/ie-tab/</em:homepageURL>
    <em:optionsURL>chrome://ietab/content/ietabSetting.xul</em:optionsURL>
    <em:iconURL>chrome://ietab/skin/ietab-icon.png</em:iconURL>
