@@ -102,7 +102,8 @@ var IeTabCallback = {
 	},
 
 	switchBackToFirefox: function() {
-		// TODO: switch current IeTab back to Firefox.
+		// switch current IeTab back to Firefox.
+		document.location = document.getElementById("ietab-plugin").url;
 	},
 
 	// check if the browser needs to handle the key press event
