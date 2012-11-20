@@ -76,6 +76,7 @@ private:
 
 		// WindowProc for innermost Internet_Explorer_Server window.
 	static LRESULT InnerWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
+	LRESULT HandleInnerWndProc(UINT message, WPARAM wparam, LPARAM lparam);
 	static LRESULT CALLBACK GetMsgHookProc(int code, WPARAM wParam, LPARAM lParam);
 
 	BEGIN_SINK_MAP(CWebBrowser)

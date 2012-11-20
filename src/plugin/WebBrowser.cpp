@@ -183,10 +183,9 @@ LRESULT CWebBrowser::OnDestroy(UINT uMsg, WPARAM wParam , LPARAM lParam, BOOL& b
 
 	m_pInPlaceActiveObject.Release();
 
-	if(m_hInnerWnd != NULL) {
-
+	if(m_hInnerWnd != NULL) { // if we subclassed the inner most Internet Explorer Server window
 		// subclass it back
-		// ::SetWindowLongPtr(m_hInnerWnd, GWL_WNDPROC, (LONG_PTR)m_OldInnerWndProc);
+		::SetWindowLongPtr(m_hInnerWnd, GWL_WNDPROC, (LONG_PTR)m_OldInnerWndProc);
 		m_hInnerWnd = NULL;
 		ATLTRACE("window removed!!\n");
 		RemoveProp(m_hInnerWnd, reinterpret_cast<LPCTSTR>(winPropAtom));
@@ -244,7 +243,7 @@ void CWebBrowser::OnNavigateComplete2(IDispatch* pDisp,  VARIANT* URL) {
 			m_hInnerWnd = child;
 		}
 		// subclass the window
-		// m_OldInnerWndProc = (WNDPROC)::SetWindowLongPtr(m_hInnerWnd, GWL_WNDPROC, (LONG_PTR)InnerWndProc);
+		m_OldInnerWndProc = (WNDPROC)::SetWindowLongPtr(m_hInnerWnd, GWL_WNDPROC, (LONG_PTR)InnerWndProc);
 		SetProp(m_hInnerWnd, reinterpret_cast<LPCTSTR>(winPropAtom), reinterpret_cast<HANDLE>(this));
 	}
 	// ATLTRACE("NavigateComplete\n");
@@ -307,8 +306,64 @@ void CWebBrowser::OnFinalMessage(HWND hwnd) {
 }
 
 // WindowProc for innermost Internet_Explorer_Server window.
-LRESULT CWebBrowser::InnerWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
-{
+LRESULT CWebBrowser::HandleInnerWndProc(UINT message, WPARAM wparam, LPARAM lparam) {
+
+	// This is called from the WndProc of the innermost Internet_Explorer_Server window
+	// of IE web control. It's not exposed by the IWebBrowser interface, but we need it.
+	// So we get its HWND with a dirty way and did window subclassing to intercept its events.
+	//
+	// Firefox > 3 introduced the so-called OOPP and uses quite a lot of dirty hacks to
+	// make cross-process window hierachy possible. However it's very problematic and
+	// instead of make the design cleaner, the Firefox team only added dirty hacks for famous
+	// plugins to make them work. So that's why only flash, adobe pdf, and several famous ones work.
+	// The problem is, each process has its own message queue and input focus. Windows from
+	// different process are independent from each other. To make OOPP work, dirty hacks are needed.
+	// 
+	// From source code of Mozilla, we now know that it relies on WM_MOUSEACTIVATE and WM_KILLFOCUS
+	// messages sent by Windows to the plugin window (window class name: GeckoPluginWindow).
+	// When the plugin window running in the child process receives WM_MOUSEATVIATE, it by default
+	// send a notification via IPC to the parent Firefox window to tell it that the plugin get the focus.
+	// When it receives WM_KILLFOCUS, it again sends an IPC message to tell parent process that
+	// the plugin losses the focus and the main firefox window should grab the focus.
+	// However, this only works if the plugin window does not have any child windows.
+	// If its child window gets focused or activated by mouse, the messages are not passed
+	// to the plugin window directly and of course the firefox mechanism to handle focus becomes broken.
+	// So the simple solution, an even dirtier hack is, send fake WM_MOUSEACTIVATE & WM_KILLFOCUS
+	// messages to the plugin window running in the child process, so it can do proper IPC with
+	// the main process.
+
+	// References: OOPP IPC-related Mozilla Firefox source code:
+	// http://dxr.mozilla.org/mozilla-central/dom/plugins/ipc/PluginInstanceChild.cpp.html#l1461
+	// http://dxr.mozilla.org/mozilla-central/--GENERATED--/ipc/ipdl/PPluginInstanceChild.cpp.html#l1456
+	// http://dxr.mozilla.org/mozilla-central/dom/plugins/ipc/PluginInstanceParent.cpp.html#l38
+	// http://dxr.mozilla.org/mozilla-central/--GENERATED--/ipc/ipdl/PPluginInstanceParent.cpp.html#l2494
+
+	switch(message) {
+		case WM_MOUSEACTIVATE: {
+			// ATLTRACE("child WM_MOUSEACTIVATE\n");
+			::SendMessage(m_Plugin->GetHwnd(), WM_MOUSEACTIVATE, wparam, lparam);
+			break;
+		}
+		/* I think firefox does not utilize this
+		case WM_SETFOCUS: {
+			// ATLTRACE("child WM_SETFOCUS\n");
+			::SendMessage(m_Plugin->GetHwnd(), WM_SETFOCUS, 0, 0);
+			break;
+		}
+		*/
+		case WM_KILLFOCUS: {
+			// ATLTRACE("child WM_KILLFOCUS\n");
+			::PostMessage(m_Plugin->GetHwnd(), WM_KILLFOCUS, 0, 0);
+			break;
+		}
+	}
+	return CallWindowProc(m_OldInnerWndProc, m_hInnerWnd, message, wparam, lparam);
+}
+
+// WindowProc for innermost Internet_Explorer_Server window.
+LRESULT CWebBrowser::InnerWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
 	CWebBrowser* pWebBrowser = reinterpret_cast<CWebBrowser*>(GetProp(hwnd, reinterpret_cast<LPCTSTR>(winPropAtom)));
-	return CallWindowProc(pWebBrowser->m_OldInnerWndProc, hwnd, message, wparam, lparam);
+	if(pWebBrowser)
+		return pWebBrowser->HandleInnerWndProc(message, wparam, lparam);
+	return 0; // This is not possible
 }

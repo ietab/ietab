@@ -196,7 +196,10 @@ public:
 	void Focus() {
 		if(!m_pWebBrowser)
 			return;
-		// m_pWebBrowser->SetFocus();
+		// if(::GetFocus() != m_pWebBrowser->m_hWnd)
+		//	m_pWebBrowser->SetFocus();
+
+		// really set the focus to the html window.
 		CComPtr<IDispatch> doc;
 		if(SUCCEEDED((*m_pWebBrowser)->get_Document(&doc))) {
 			CComQIPtr<IHTMLDocument2> htmlDoc = doc;
@@ -366,7 +369,7 @@ private:
 	long m_Progress;
 	long m_SecureLockIcon;
     CWebBrowser* m_pWebBrowser;
-	WNDPROC lpOldProc; // old window proc of the Gecko plugin window
+	WNDPROC m_lpOldProc; // old window proc of the Gecko plugin window
 	DWORD m_ThreadId;
 
 	CComBSTR m_StatusText;

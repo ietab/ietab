@@ -114,7 +114,7 @@ CPlugin::CPlugin(NPP pNPInstance) :
     m_hWnd(NULL),
 	m_Progress(0),
 	m_SecureLockIcon(0),
-	lpOldProc(NULL) {
+	m_lpOldProc(NULL) {
 
 	m_ThreadId = GetCurrentThreadId();
 }
@@ -142,7 +142,7 @@ NPBool CPlugin::Init(NPWindow* pNPWindow) {
 
     // subclass window so we can intercept window messages and
     // do our drawing to it
-    lpOldProc = SubclassWindow(m_hWnd, (WNDPROC)PluginWinProc);
+    m_lpOldProc = SubclassWindow(m_hWnd, (WNDPROC)PluginWinProc);
 
     // associate window with our CPlugin object so we can access
     // it in the window procedure
@@ -184,7 +184,7 @@ void CPlugin::Destroy() {
 	}
 
     // subclass it back
-    SubclassWindow(m_hWnd, lpOldProc);
+    SubclassWindow(m_hWnd, m_lpOldProc);
     m_hWnd = NULL;
     m_bInitialized = FALSE;
 }
@@ -750,9 +750,9 @@ void CPlugin::RegisterIdentifiers() {
 // Following are Windows dirty jobs
 
 /* static */ LRESULT CALLBACK CPlugin::PluginWinProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    CPlugin * plugin = (CPlugin *)GetWindowLongPtr(hWnd, GWL_USERDATA);
     switch (msg) {
 	case WM_SIZE: {
-        CPlugin * plugin = (CPlugin *)GetWindowLongPtr(hWnd, GWL_USERDATA);
         RECT rc;
         GetClientRect(hWnd, &rc);
 		if(plugin->m_pWebBrowser)
@@ -760,13 +760,11 @@ void CPlugin::RegisterIdentifiers() {
 		break;
 	}
 	case WM_ERASEBKGND: {
-        CPlugin * plugin = (CPlugin *)GetWindowLongPtr(hWnd, GWL_USERDATA);
 		if(plugin->m_pWebBrowser) // if web browser control is created
 			return TRUE; // don't paint background
 		break;
 	}
 	case WM_IETAB_COMMAND: {
-        CPlugin * plugin = (CPlugin *)GetWindowLongPtr(hWnd, GWL_USERDATA);
 		switch(wParam) {
 		case NEW_TAB:
 			plugin->OnNewTab();
@@ -795,10 +793,15 @@ void CPlugin::RegisterIdentifiers() {
 		}
 		break;
 	}
+	case WM_SETFOCUS:
+		// Focus the browser control if needed
+		plugin->Focus();
+		break;
 	default:
         break;
     }
-    return DefWindowProc(hWnd, msg, wParam, lParam);
+    // return DefWindowProc(hWnd, msg, wParam, lParam);
+	return CallWindowProc(plugin->m_lpOldProc, hWnd, msg, wParam, lParam);
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
