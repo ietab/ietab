@@ -762,6 +762,57 @@ IeTab.prototype.destroy = function() {
    delete gIeTab;
 }
 
+IeTab.prototype.filterKeyPress = function(keyCode, isAltDown, isCtrlDown, isShiftDown) {
+	// Search for firefox shortcut keys
+	// All of the shortcut keys used by the firefox window are defined in <key> tags.
+	// See: https://developer.mozilla.org/en-US/docs/XUL_Tutorial/Keyboard_Shortcuts
+	//
+	// By searching the key in the <key> tags, we can find the command it should launch.
+	// In this way, we can pass key events got by IE Tab to Firefox, and launch commands as appropriate.
+	var keyName = this.keyCodeToString(keyCode);
+	var elements = document.getElementsByTagName("key");
+	var n = elements.length;
+	for(i = 0; i < n; ++i) {
+		var element = elements[i];
+		var same_key = false;
+		if(keyName) { // if the key pressed has a virtual key name
+			var key = element.getAttribute("keycode");
+			if(keyName == key)
+				same_key = true;
+		}
+		else { // the key pressed is a printable character
+			var key = element.getAttribute("key").toUpperCase();
+			if(keyCode == key.charCodeAt(0))
+				same_key = true;
+		}
+
+		if(same_key) { // if key matches, check modifiers
+			var alt = false;
+			var ctrl = false;
+			var shift = false;
+			var modifiers = element.getAttribute("modifiers");
+			if(modifiers) {
+				var mods = modifiers.split(" ");
+				// alert(mods);
+				if(mods.indexOf("accel") != -1 || mods.indexOf("ctrl") != -1)
+					ctrl = true;
+				if(mods.indexOf("shift") != -1)
+					shift = true;
+				if(mods.indexOf("alt") != -1)
+					alt = true;
+			}
+			if(alt == isAltDown && ctrl == isCtrlDown && shift == isShiftDown) {
+				// completely match
+				// alert(element.id);
+				element.doCommand();
+				return true;
+				break;
+			}
+		}
+	}
+	return false;
+}
+
 var gIeTab = new IeTab();
 
 gIeTab.addEventListener(window, "load", gIeTab.init);

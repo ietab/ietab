@@ -42,6 +42,8 @@
 // CPlugin class implementation
 //
 
+#pragma warning(disable:4996) // warning C4996: 'sprintf': This function or variable may be unsafe
+
 #include <stdio.h>
 #include "plugin.h"
 #include <windows.h>
@@ -167,6 +169,20 @@ NPBool CPlugin::Init(NPWindow* pNPWindow) {
 		//FIXME: this won't be called :-(
 		m_pCallbackObject.Invoke(m_pNPInstance, "ready", NULL, "v");
 	}
+
+	/*
+	DWORD current_thread = ::GetThreadId(GetCurrentThread());
+	DWORD parent_thread = 0;
+	HWND parent = m_hWnd;
+	do {
+		parent = ::GetParent(parent);
+		parent_thread = ::GetWindowThreadProcessId(parent, NULL);
+		if(parent_thread != current_thread) {
+			AttachThreadInput(current_thread, parent_thread, TRUE);
+			break;
+		}
+	}while(parent != NULL && parent != HWND_DESKTOP);
+	*/
 
 	return TRUE;
 }

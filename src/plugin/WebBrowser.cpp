@@ -61,7 +61,6 @@ LRESULT CALLBACK CWebBrowser::GetMsgHookProc(int code, WPARAM wParam, LPARAM lPa
 					bool needTranslateAccelerator = true;
 					// Let the browser filter the key event first
 					if(pWebBrowser->GetPlugin()) {
-
 						if(msg->message == WM_KEYDOWN || msg->message == WM_SYSKEYDOWN) {
 							// we only pass the key to plugin if the browser does not want it.
 							bool isAltDown = GetKeyState(VK_MENU) & 0x8000 ? true : false;
@@ -70,10 +69,7 @@ LRESULT CALLBACK CWebBrowser::GetMsgHookProc(int code, WPARAM wParam, LPARAM lPa
 							if(pWebBrowser->GetPlugin()->FilterKeyPress(static_cast<int>(msg->wParam), isAltDown, isCtrlDown, isShiftDown)) {
 								needTranslateAccelerator = false; // the browser wants it!
 								// forward the message to parent window.
-								HWND toplevel = ::GetParent(pWebBrowser->GetPlugin()->GetHwnd());
-								::PostMessage(toplevel, msg->message, msg->wParam, msg->lParam);
 								msg->message = WM_NULL; // eat the message
-								// FIXME: can we just set msg->hwnd to toplevel? will this cause any problems?
 							}
 						}
 
