@@ -210,3 +210,63 @@ IeTab.prototype.getUrlHost = function(url) {
 }
 
 //-----------------------------------------------------------------------------
+
+var keyCodeNames = new Array();
+// initialize keyCodeNames
+function initKeyCodeNames() {
+	keyCodeNames[0x03] = "VK_CANCEL";
+	keyCodeNames[0x08] = "VK_BACK";
+	keyCodeNames[0x09] = "VK_TAB";
+	keyCodeNames[0x0C] = "VK_CLEAR";
+	keyCodeNames[0x0D] = "VK_RETURN";
+	keyCodeNames[0x0D] = "VK_ENTER"
+	keyCodeNames[0x10] = "VK_SHIFT"
+	keyCodeNames[0x11] = "VK_CONTROL";
+	keyCodeNames[0x12] = "VK_ALT";
+	keyCodeNames[0x13] = "VK_PAUSE";
+	keyCodeNames[0x14] = "VK_CAPS_LOCK";
+	keyCodeNames[0x1B] = "VK_ESCAPE";
+	keyCodeNames[0x20] = "VK_SPACE";
+	keyCodeNames[0x21] = "VK_PAGE_UP";
+	keyCodeNames[0x22] = "VK_PAGE_DOWN";
+	keyCodeNames[0x23] = "VK_END";
+	keyCodeNames[0x24] = "VK_HOME";
+	keyCodeNames[0x25] = "VK_LEFT";
+	keyCodeNames[0x26] = "VK_UP";
+	keyCodeNames[0x27] = "VK_RIGHT";
+	keyCodeNames[0x28] = "VK_DOWN";
+	keyCodeNames[0x2A] = "VK_PRINTSCREEN";
+	keyCodeNames[0x2D] = "VK_INSERT";
+	keyCodeNames[0x2E] = "VK_DELETE";
+	//keyCodeNames[] = "VK_SEMICOLON";
+	//keyCodeNames[] = "VK_EQUALS";
+	for(i = 0; i <=9; ++i) { // numpad 0-9
+		keyCodeNames[0x60 + i] = ("VK_NUMPAD" + i);
+	}
+	keyCodeNames[0x6A] = "VK_MULTIPLY";
+	keyCodeNames[0x6B] = "VK_ADD";
+	keyCodeNames[0x6C] = "VK_SEPARATOR";
+	keyCodeNames[0x6D] = "VK_SUBTRACT";
+	keyCodeNames[0x6E] = "VK_DECIMAL";
+	keyCodeNames[0x6F] = "VK_DIVIDE";
+	for(i = 1; i <= 24; ++i) { // F1 - F24
+		keyCodeNames[0x6F + i] = "VK_F" + i;
+	}
+	keyCodeNames[0x90] = "VK_NUM_LOCK";
+	keyCodeNames[0x91] = "VK_SCROLL_LOCK";
+	keyCodeNames[0xBC] = "VK_COMMA";
+	keyCodeNames[0xBE] = "VK_PERIOD";
+	// keyCodeNames[] = "VK_SLASH";
+	// keyCodeNames[] = "VK_BACK_QUOTE";
+	// keyCodeNames[] = "VK_OPEN_BRACKET";
+	// keyCodeNames[] = "VK_BACK_SLASH";
+	// keyCodeNames[] = "VK_CLOSE_BRACKET";
+	// keyCodeNames[] = "VK_QUOTE";
+	keyCodeNames[0x2F] = "VK_HELP";
+}
+initKeyCodeNames();
+
+// convert virtual key code from value to string
+IeTab.prototype.keyCodeToString = function(keycode_val) {
+	return keyCodeNames[keycode_val];
+}

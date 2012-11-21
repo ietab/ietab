@@ -108,50 +108,7 @@ var IeTabCallback = {
 
 	// check if the browser needs to handle the key press event
 	filterKeyPress: function(keyCode, isAltDown, isCtrlDown, isShiftDown) {
-		if(isAltDown) {
-			switch(keyCode) {
-			case 0x46: // F
-			case 0x45: // E
-			case 0x56: // V
-			case 0x53: // S
-			case 0x42: // B
-			case 0x54: // T
-			case 0x48: // H
-				return true;
-			default:
-			}
-		}
-		else if(isCtrlDown) {
-			switch(keyCode) {
-			case 0x54: // T
-			case 0x4e: // N
-			case 0x4f: // O
-			case 0x2f: // /
-			case 0x44: // D
-				return true;
-			}
-
-			if(isShiftDown) { // Ctrl + Shift
-				switch(keyCode) {
-				case 0x42: // B
-					return true;
-				}
-			}
-		}
-		else if(isShiftDown) {
-			switch(keyCode){
-			case 0x79: // VK_F10
-				return true;
-			}
-		}
-		else {
-			switch(keyCode){
-			case 0x79: // VK_F10
-			case 0x80: // VK_F11
-				return true;
-			}
-		}
-		return false;
+		return gIeTab.filterKeyPress(keyCode, isAltDown, isCtrlDown, isShiftDown);
 	}
 };
 
