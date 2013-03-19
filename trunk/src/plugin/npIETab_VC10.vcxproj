@@ -286,6 +286,7 @@
     <ClCompile Include="WebBrowserPool.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="chrom\chrom.h" />
     <ClInclude Include="NPObjectPtr.h" />
     <ClInclude Include="npruntime\plugin.h" />
     <ClInclude Include="npruntime\resource.h" />

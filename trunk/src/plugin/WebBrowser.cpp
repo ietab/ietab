@@ -28,10 +28,12 @@ HHOOK CWebBrowser::getMsgHook = NULL;
 
 CWebBrowser::CWebBrowser(CPlugin* plugin):
 	m_Plugin(plugin),
+	m_pIWebBrowser2(NULL),
 	m_hInnerWnd(NULL),
 	m_CanBack(false),
 	m_CanForward(false),
-	m_OldInnerWndProc(NULL) {
+	m_OldInnerWndProc(NULL),
+	m_Destroyed(false) {
 }
 
 CWebBrowser::~CWebBrowser() {
@@ -45,56 +47,49 @@ CWebBrowser::~CWebBrowser() {
 // bool nsAppShell::ProcessNextNativeEvent(bool mayWait)
 // It does PeekMessage, TranslateMessage, and then pass the result directly
 // to DispatchMessage.
-// Just before PeekMessage returns, our hook procedure is called.
-LRESULT CALLBACK CWebBrowser::GetMsgHookProc(int code, WPARAM wParam, LPARAM lParam) {
-	LRESULT ret = CallNextHookEx(getMsgHook, code, wParam, lParam);
-	if(code == HC_ACTION || code >= 0) {
-		if(wParam == PM_REMOVE) { // GetMessage() is called
-			MSG* msg = reinterpret_cast<MSG*>(lParam);
-			// here we only handle keyboard messages
-			if((msg->message >= WM_KEYFIRST && msg->message <= WM_KEYLAST) ||
-			   (msg->message >= WM_MOUSEFIRST || msg->message <= WM_MOUSELAST)) {
-				// get the browser object from HWND
-				CWebBrowser* pWebBrowser = reinterpret_cast<CWebBrowser*>(GetProp(msg->hwnd, reinterpret_cast<LPCTSTR>(winPropAtom)));
-				if(pWebBrowser != NULL) {
+BOOL CALLBACK CWebBrowser::PreTranslateMessage(MSG* msg) {
+	BOOL ret = FALSE;
+	// here we only handle keyboard messages
+	if((msg->message >= WM_KEYFIRST && msg->message <= WM_KEYLAST) ||
+		(msg->message >= WM_MOUSEFIRST || msg->message <= WM_MOUSELAST)) {
+		// get the browser object from HWND
+		CWebBrowser* pWebBrowser = reinterpret_cast<CWebBrowser*>(GetProp(msg->hwnd, reinterpret_cast<LPCTSTR>(winPropAtom)));
+		if(pWebBrowser != NULL) {
+			bool needTranslateAccelerator = true;
+			// Let the browser filter the key event first
+			if(pWebBrowser->GetPlugin()) {
+				if(msg->message == WM_KEYDOWN || msg->message == WM_SYSKEYDOWN) {
+					// we only pass the key to plugin if the browser does not want it.
+					bool isAltDown = GetKeyState(VK_MENU) & 0x8000 ? true : false;
+					bool isCtrlDown = GetKeyState(VK_CONTROL) & 0x8000 ? true : false;
+					bool isShiftDown = GetKeyState(VK_SHIFT) & 0x8000 ? true : false;
+					if(pWebBrowser->GetPlugin()->FilterKeyPress(static_cast<int>(msg->wParam), isAltDown, isCtrlDown, isShiftDown)) {
+						needTranslateAccelerator = false; // the browser wants it!
+						// forward the message to parent window.
+						msg->message = WM_NULL; // eat the message
+					}
+				}
 
-					bool needTranslateAccelerator = true;
-					// Let the browser filter the key event first
-					if(pWebBrowser->GetPlugin()) {
-						if(msg->message == WM_KEYDOWN || msg->message == WM_SYSKEYDOWN) {
-							// we only pass the key to plugin if the browser does not want it.
-							bool isAltDown = GetKeyState(VK_MENU) & 0x8000 ? true : false;
-							bool isCtrlDown = GetKeyState(VK_CONTROL) & 0x8000 ? true : false;
-							bool isShiftDown = GetKeyState(VK_SHIFT) & 0x8000 ? true : false;
-							if(pWebBrowser->GetPlugin()->FilterKeyPress(static_cast<int>(msg->wParam), isAltDown, isCtrlDown, isShiftDown)) {
-								needTranslateAccelerator = false; // the browser wants it!
-								// forward the message to parent window.
-								msg->message = WM_NULL; // eat the message
-							}
-						}
+				if(needTranslateAccelerator) {
+					if(pWebBrowser->m_pInPlaceActiveObject->TranslateAccelerator(msg) == S_OK ) {
+						// NOTE: What a dirty hack!
+						// According to MSDN, translated MSGs should not be passed again to
+						// TranslateMessage().
+						// Unfortunately, message loop of Firefox does not consider accelerators
+						// and call TranslateMessage() and DispatchMessage() unconditionally.
+						// So, here we call DispatchMessage() ourself instead of letting Firefox
+						// do it, and eat the message by setting it to NULL. This way we can
+						// bypass TranslateMessage() called by Firefox.
+						// I, however, am not sure if this is correct.
+						// MSDN did not tell us whether we should pass the message to other hooks
+						// before or after we change its content.
 
-						if(needTranslateAccelerator) {
-							if(pWebBrowser->m_pInPlaceActiveObject->TranslateAccelerator(msg) == S_OK ) {
-								// NOTE: What a dirty hack!
-								// According to MSDN, translated MSGs should not be passed again to
-								// TranslateMessage().
-								// Unfortunately, message loop of Firefox does not consider accelerators
-								// and call TranslateMessage() and DispatchMessage() unconditionally.
-								// So, here we call DispatchMessage() ourself instead of letting Firefox
-								// do it, and eat the message by setting it to NULL. This way we can
-								// bypass TranslateMessage() called by Firefox.
-								// I, however, am not sure if this is correct.
-								// MSDN did not tell us whether we should pass the message to other hooks
-								// before or after we change its content.
-
-								// FIXME: It seems that we should not dispatch the message.
-								//        Otherwise, the web browser control will receive
-								//        duplicated key events sometimes?
-								// DispatchMessage(msg);
-								ATLTRACE("TRANSLATED!!\n");
-								msg->message = WM_NULL; // eat the message
-							}
-						}
+						// FIXME: It seems that we should not dispatch the message.
+						//        Otherwise, the web browser control will receive
+						//        duplicated key events sometimes?
+						// DispatchMessage(msg);
+						ATLTRACE("TRANSLATED!!\n");
+						msg->message = WM_NULL; // eat the message
 					}
 				}
 			}
@@ -155,19 +150,19 @@ LRESULT CWebBrowser::OnCreate(UINT uMsg, WPARAM wParam , LPARAM lParam, BOOL& bH
 		AtlGetObjectSourceInterface(pUnk, &m_libid, &m_iid, &m_wMajorVerNum, &m_wMinorVerNum);
 		DispEventAdvise(pUnk, &DIID_DWebBrowserEvents2);
 
-		pUnk->QueryInterface(IID_IWebBrowser2, (void**)(CComPtr<IWebBrowser2>*)this);
+		pUnk->QueryInterface(IID_IWebBrowser2, (void**)&m_pIWebBrowser2);
 		pUnk->Release();
 
-		m_pInPlaceActiveObject = *this; // store the IOleInPlaceActiveObject iface for future use
-		(*this)->put_RegisterAsBrowser(VARIANT_TRUE);
-		(*this)->put_RegisterAsDropTarget(VARIANT_TRUE);
+		m_pInPlaceActiveObject = m_pIWebBrowser2; // store the IOleInPlaceActiveObject iface for future use
+		m_pIWebBrowser2->put_RegisterAsBrowser(VARIANT_TRUE);
+		m_pIWebBrowser2->put_RegisterAsDropTarget(VARIANT_TRUE);
 	}
 
 	++browserCount;
 	if(getMsgHook == NULL) {
 		// install the windows hook if needed
 		HINSTANCE inst = static_cast<CComModule*>(_pAtlModule)->GetModuleInstance();
-		getMsgHook = SetWindowsHookEx(WH_GETMESSAGE, GetMsgHookProc, (HMODULE)inst, 0);
+		// getMsgHook = SetWindowsHookEx(WH_GETMESSAGE, GetMsgHookProc, (HMODULE)inst, 0);
 
 		winPropAtom = GlobalAddAtom(L"IETab::WebBrowser");
 	}
@@ -177,24 +172,35 @@ LRESULT CWebBrowser::OnCreate(UINT uMsg, WPARAM wParam , LPARAM lParam, BOOL& bH
 
 LRESULT CWebBrowser::OnDestroy(UINT uMsg, WPARAM wParam , LPARAM lParam, BOOL& bHandled) {
 
-	m_pInPlaceActiveObject.Release();
+	if(m_Destroyed == false) {
 
-	if(m_hInnerWnd != NULL) { // if we subclassed the inner most Internet Explorer Server window
-		// subclass it back
-		::SetWindowLongPtr(m_hInnerWnd, GWL_WNDPROC, (LONG_PTR)m_OldInnerWndProc);
-		m_hInnerWnd = NULL;
-		ATLTRACE("window removed!!\n");
-		RemoveProp(m_hInnerWnd, reinterpret_cast<LPCTSTR>(winPropAtom));
-	}
+		// It seems that ATL incorrectly calls OnDestroy twice for one window.
+		// So we need to guard OnDestroy with a flag. Otherwise we will uninitilaize things 
+		// twice and get cryptic and terrible crashes.
 
-	--browserCount;
-	// uninstall the hook if no one needs it now
-	if(getMsgHook && 0 == browserCount) {
-		UnhookWindowsHookEx(getMsgHook);
-		getMsgHook = NULL;
+		m_pIWebBrowser2.Release();
+		m_pInPlaceActiveObject.Release();
 
-		GlobalDeleteAtom(winPropAtom);
-		winPropAtom = NULL;
+		if(m_hInnerWnd != NULL) { // if we subclassed the inner most Internet Explorer Server window
+			// subclass it back
+			::SetWindowLongPtr(m_hInnerWnd, GWL_WNDPROC, (LONG_PTR)m_OldInnerWndProc);
+			ATLTRACE("window removed!!\n");
+			RemoveProp(m_hInnerWnd, reinterpret_cast<LPCTSTR>(winPropAtom));
+			m_hInnerWnd = NULL;
+		}
+
+		--browserCount;
+		ATLASSERT(browserCount >=0); // this value should never < 0. otherwise it's a bug.
+
+		// uninstall the hook if no one needs it now
+		if(getMsgHook && 0 == browserCount) {
+			UnhookWindowsHookEx(getMsgHook);
+			getMsgHook = NULL;
+
+			GlobalDeleteAtom(winPropAtom);
+			winPropAtom = NULL;
+		}
+		m_Destroyed = true;
 	}
 	bHandled = TRUE;
 	return 0;
@@ -205,7 +211,7 @@ void CWebBrowser::OnNewWindow2(IDispatch **ppDisp, VARIANT_BOOL *Cancel) {
 	CWebBrowser* newWebBrowser = CPlugin::browserPool->AddNew();
 	// FIXME: what will happen if the top level parent is destroyed before we have a new tab?
 	if(newWebBrowser) {
-		(*newWebBrowser)->get_Application(ppDisp);
+		newWebBrowser->GetIWebBrowser2()->get_Application(ppDisp);
 		if(m_Plugin) {
 			m_Plugin->NewTab(newWebBrowser);
 		}
@@ -334,23 +340,25 @@ LRESULT CWebBrowser::HandleInnerWndProc(UINT message, WPARAM wparam, LPARAM lpar
 	// http://dxr.mozilla.org/mozilla-central/dom/plugins/ipc/PluginInstanceParent.cpp.html#l38
 	// http://dxr.mozilla.org/mozilla-central/--GENERATED--/ipc/ipdl/PPluginInstanceParent.cpp.html#l2494
 
-	switch(message) {
-		case WM_MOUSEACTIVATE: {
-			// ATLTRACE("child WM_MOUSEACTIVATE\n");
-			::SendMessage(m_Plugin->GetHwnd(), WM_MOUSEACTIVATE, wparam, lparam);
-			break;
-		}
-		/* I think firefox does not utilize this
-		case WM_SETFOCUS: {
-			// ATLTRACE("child WM_SETFOCUS\n");
-			::SendMessage(m_Plugin->GetHwnd(), WM_SETFOCUS, 0, 0);
-			break;
-		}
-		*/
-		case WM_KILLFOCUS: {
-			// ATLTRACE("child WM_KILLFOCUS\n");
-			::PostMessage(m_Plugin->GetHwnd(), WM_KILLFOCUS, 0, 0);
-			break;
+	if(m_Plugin) {
+		switch(message) {
+			case WM_MOUSEACTIVATE: {
+				// ATLTRACE("child WM_MOUSEACTIVATE\n");
+				::SendMessage(m_Plugin->GetHwnd(), WM_MOUSEACTIVATE, wparam, lparam);
+				break;
+			}
+			/* I think firefox does not utilize this
+			case WM_SETFOCUS: {
+				// ATLTRACE("child WM_SETFOCUS\n");
+				::SendMessage(m_Plugin->GetHwnd(), WM_SETFOCUS, 0, 0);
+				break;
+			}
+			*/
+			case WM_KILLFOCUS: {
+				// ATLTRACE("child WM_KILLFOCUS\n");
+				::PostMessage(m_Plugin->GetHwnd(), WM_KILLFOCUS, 0, 0);
+				break;
+			}
 		}
 	}
 	return CallWindowProc(m_OldInnerWndProc, m_hInnerWnd, message, wparam, lparam);

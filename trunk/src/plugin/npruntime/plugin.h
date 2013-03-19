@@ -118,13 +118,13 @@ public:
 	bool GoBack() {
 		if(!m_pWebBrowser)
 			return false;
-		return SUCCEEDED((*m_pWebBrowser)->GoBack());
+		return SUCCEEDED(m_pWebBrowser->GetIWebBrowser2()->GoBack());
 	}
 
 	bool GoForward() {
 		if(!m_pWebBrowser)
 			return false;
-		return SUCCEEDED((*m_pWebBrowser)->GoForward());
+		return SUCCEEDED(m_pWebBrowser->GetIWebBrowser2()->GoForward());
 	}
 
 	bool Navigate(const char* url) {
@@ -135,20 +135,20 @@ public:
 
 		CComVariant vurl = url;
 		CComVariant null;
-		return SUCCEEDED((*m_pWebBrowser)->Navigate2(&vurl, &null, &null, &null, &null));
+		return SUCCEEDED(m_pWebBrowser->GetIWebBrowser2()->Navigate2(&vurl, &null, &null, &null, &null));
 	}
 
 	bool Refresh() {
 		if(!m_pWebBrowser)
 			return false;
 		CComVariant level = REFRESH_NORMAL;
-		return SUCCEEDED((*m_pWebBrowser)->Refresh2(&level));
+		return SUCCEEDED(m_pWebBrowser->GetIWebBrowser2()->Refresh2(&level));
 	}
 
 	bool Stop() {
 		if(!m_pWebBrowser)
 			return false;
-		return SUCCEEDED((*m_pWebBrowser)->Stop());
+		return SUCCEEDED(m_pWebBrowser->GetIWebBrowser2()->Stop());
 	}
 
 	bool SaveAs() {
@@ -201,7 +201,7 @@ public:
 
 		// really set the focus to the html window.
 		CComPtr<IDispatch> doc;
-		if(SUCCEEDED((*m_pWebBrowser)->get_Document(&doc))) {
+		if(SUCCEEDED(m_pWebBrowser->GetIWebBrowser2()->get_Document(&doc))) {
 			CComQIPtr<IHTMLDocument2> htmlDoc = doc;
 			if(htmlDoc) {
 				CComPtr<IHTMLWindow2> window;
@@ -312,14 +312,14 @@ protected:
 	bool DoOleCommand(OLECMDID id, OLECMDEXECOPT opt = OLECMDEXECOPT_DODEFAULT) {
 		if(!m_pWebBrowser || !IsOleCommandEnabled(id))
 			return false;
-		return SUCCEEDED((*m_pWebBrowser)->ExecWB(id, opt, NULL, NULL));
+		return SUCCEEDED(m_pWebBrowser->GetIWebBrowser2()->ExecWB(id, opt, NULL, NULL));
 	}
 
 	bool DoHtmlCommand(int id, OLECMDEXECOPT opt = OLECMDEXECOPT_DODEFAULT) {
 		if(!m_pWebBrowser)
 			return false;
 		CComPtr<IDispatch> disp;
-		(*m_pWebBrowser)->get_Document(&disp);
+		m_pWebBrowser->GetIWebBrowser2()->get_Document(&disp);
 		CComQIPtr<IOleCommandTarget> cmdTarget = disp; // = m_WebBrowser;
 		return SUCCEEDED(cmdTarget->Exec(&CGID_MSHTML, id, opt, NULL, NULL));
 	}
@@ -328,7 +328,7 @@ protected:
 		if(!m_pWebBrowser)
 			return false;
 		OLECMDF flags;
-		return (SUCCEEDED((*m_pWebBrowser)->QueryStatusWB(id, &flags)) && (flags & OLECMDF_ENABLED));
+		return (SUCCEEDED(m_pWebBrowser->GetIWebBrowser2()->QueryStatusWB(id, &flags)) && (flags & OLECMDF_ENABLED));
 	}
 
 	NPObject* GetDomDocument() {
@@ -344,8 +344,6 @@ protected:
 	}
 
 	static LRESULT CALLBACK PluginWinProc(HWND, UINT, WPARAM, LPARAM);
-
-	static void doUpdateStatusText(CPlugin* plugin);
 
 	// NPObject functions redirected from ScriptablePluginObject
     bool HasMethod(NPIdentifier name);
