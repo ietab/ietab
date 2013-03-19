@@ -49,10 +49,12 @@ public:
 	// IDocHostUIHandler
 	STDMETHOD(GetHostInfo)(DOCHOSTUIINFO FAR* pInfo);
 	STDMETHOD(TranslateAccelerator)(LPMSG lpMsg, const GUID FAR* pguidCmdGroup, DWORD nCmdID) {
-		return E_NOTIMPL;
+		return CAxHostWindow::TranslateAccelerator(lpMsg, pguidCmdGroup, nCmdID);
+		// return E_NOTIMPL;
 	}
 	STDMETHOD(GetExternal)(IDispatch** ppDispatch) {
-		return E_NOTIMPL;
+		return CAxHostWindow::GetExternal(ppDispatch);
+		// return E_NOTIMPL;
 	}
 
 	STDMETHOD(ShowContextMenu)(DWORD dwID, POINT FAR* ppt, IUnknown* pcmdTarget, IDispatch* pdispObject);

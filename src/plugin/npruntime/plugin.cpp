@@ -51,6 +51,8 @@
 #include "ScriptablePluginObject.h"
 #include "../urlmon_compat.h"
 
+#include "../chrom/chrom.h"
+
 #define WM_IETAB_COMMAND	(WM_APP + 1)
 
 enum IETabCommand {
@@ -190,10 +192,8 @@ NPBool CPlugin::Init(NPWindow* pNPWindow) {
 void CPlugin::Destroy() {
 
 	if(m_pWebBrowser) {
-		// we have to Release() the COM pointer first
-		// Otherwise, after DestroyWindow, it will become invalid.
 		// m_pWebBrowser->EasyUnadvise(); // disconnect the sink
-		static_cast<CComPtr<IWebBrowser2>*>(m_pWebBrowser)->Release();
+		m_pWebBrowser->SetPlugin(NULL);
 		m_pWebBrowser->DestroyWindow();
 		delete m_pWebBrowser;
 		m_pWebBrowser = NULL;
@@ -232,7 +232,7 @@ bool CPlugin::InitBrowser(const char* url) {
 		m_pWebBrowser->SetParent(m_hWnd);
 		m_pWebBrowser->SetWindowPos(HWND_BOTTOM, rc.left, rc.top, (rc.right - rc.left), (rc.bottom - rc.top), SWP_SHOWWINDOW);
 		m_pWebBrowser->ShowWindow(SW_SHOW);
-		(*m_pWebBrowser)->put_Visible(VARIANT_TRUE);
+		m_pWebBrowser->GetIWebBrowser2()->put_Visible(VARIANT_TRUE);
 	}
 	else { // create a new browser control
 		m_pWebBrowser = new CWebBrowser(this);
@@ -294,7 +294,7 @@ char* CPlugin::GetUrl() {
 	if(!m_pWebBrowser)
 		return NULL;
 	BSTR url;
-	(*m_pWebBrowser)->get_LocationURL(&url);
+	m_pWebBrowser->GetIWebBrowser2()->get_LocationURL(&url);
 	char* ret = Bstr2Utf8(url);
 	SysFreeString(url);
 	return ret;
@@ -304,7 +304,7 @@ char* CPlugin::GetTitle() {
 	if(!m_pWebBrowser)
 		return NULL;
 	BSTR name;
-	(*m_pWebBrowser)->get_LocationName(&name);
+	m_pWebBrowser->GetIWebBrowser2()->get_LocationName(&name);
 	char* ret = Bstr2Utf8(name);
 	SysFreeString(name);
 	return ret;
@@ -820,19 +820,54 @@ void CPlugin::RegisterIdentifiers() {
 	return CallWindowProc(plugin->m_lpOldProc, hWnd, msg, wParam, lParam);
 }
 
+Hook gTranslateMessageHook;
+static bool apiHooked = false;
+
+typedef BOOL (WINAPI *TranslateMessageProc)(const MSG *lpMsg);
+
+// Firefox does not handle TranselateAccelerators so some keys do not
+// work in IE Tab WebBrowser control. Normally, TranslateAccelerator() should
+// be called just prior to TranslateMessage(). So we use API hook technique
+// here and hijack TranslateMessage calls.
+// Special thanks to Chrom library created by Raja Jamwal 2011, <www.experiblog.co.cc> <linux1@zoho.com>.
+BOOL WINAPI TranslateMessageHook(const MSG *lpMsg) {
+	// reset hooks, this will replace the jump instruction to original data
+
+	// let our browser controls filter the message first.
+	BOOL ret = CWebBrowser::PreTranslateMessage((MSG*)lpMsg);
+	if(!ret) {
+		// if we don't translate any accelerators, call the original TranslateMessage().
+	    gTranslateMessageHook.Reset();
+		TranslateMessageProc oldTranslateMessage;
+		oldTranslateMessage = (TranslateMessageProc)gTranslateMessageHook.original_function;
+		ret = oldTranslateMessage(lpMsg);
+		// again place the jump instruction on the original function
+	    gTranslateMessageHook.Place_Hook();
+	}
+	return ret;
+}
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
     switch(fdwReason) {
     case DLL_PROCESS_ATTACH:
         // DisableThreadLibraryCalls(hinstDLL);
-        comModule.Init(NULL, hinstDLL, &LIBID_ATLLib);
+		if(!apiHooked) {
+			gTranslateMessageHook.Initialize("TranslateMessage", _T("user32.dll"), TranslateMessageHook);
+			// Write jump instruction on original function address
+			gTranslateMessageHook.Start();
+			apiHooked = true;
+		}
+
+		comModule.Init(NULL, hinstDLL, &LIBID_ATLLib);
         // Due to a bug of ATL, we should either pass our LIBID here, or
         // link to ATL dynamically. So we link atl dynamically.
         // http://support.microsoft.com/kb/832687/en-us
         // atlModule = new CAtlWinModule();
 		// CAtlModule::m_libid = LIBID_ATLLib; // FIXME: is this workaround correct?
         break;
-    case DLL_PROCESS_DETACH:
+	case DLL_PROCESS_DETACH:
         comModule.Term();
+
 		// delete atlModule;
         // atlModule = NULL;
         break;

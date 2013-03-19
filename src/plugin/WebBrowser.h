@@ -28,7 +28,6 @@
 class CPlugin;
 
 class /* ATL_NO_VTABLE */ CWebBrowser:
-	public CComPtr<IWebBrowser2>,
 	public CWindowImpl<CWebBrowser, CAxWindow>,
 	public IDispEventImpl<0, CWebBrowser> {
 public:
@@ -59,6 +58,10 @@ public:
 		return m_Plugin;
 	}
 
+	CComPtr<IWebBrowser2> GetIWebBrowser2() {
+		return m_pIWebBrowser2;
+	}
+
 private:
 	BEGIN_MSG_MAP(CWebBrowser)
 		MESSAGE_HANDLER(WM_CREATE, OnCreate)
@@ -77,7 +80,7 @@ private:
 		// WindowProc for innermost Internet_Explorer_Server window.
 	static LRESULT InnerWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 	LRESULT HandleInnerWndProc(UINT message, WPARAM wparam, LPARAM lparam);
-	static LRESULT CALLBACK GetMsgHookProc(int code, WPARAM wParam, LPARAM lParam);
+	static BOOL CALLBACK PreTranslateMessage(MSG* msg);
 
 	BEGIN_SINK_MAP(CWebBrowser)
 		SINK_ENTRY(0, DISPID_BEFORENAVIGATE2, OnBeforeNavigate2)
@@ -103,11 +106,14 @@ private:
 
 private:
 	CPlugin* m_Plugin;
+	CComPtr<IWebBrowser2> m_pIWebBrowser2;
+
 	HWND m_hInnerWnd;
 	WNDPROC m_OldInnerWndProc;
 	CComQIPtr<IOleInPlaceActiveObject> m_pInPlaceActiveObject;
 	bool m_CanBack;
 	bool m_CanForward;
+	bool m_Destroyed;
 
 	static int browserCount;
 	static ATOM winPropAtom;
