@@ -1,7 +1,7 @@
 //
 // WebBrowser.cpp: creates IWebBrowser2 control
 //
-// Copyright (C) 2012 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
+// Copyright (C) 2012 - 2013 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -24,7 +24,6 @@
 
 int CWebBrowser::browserCount = 0;
 ATOM CWebBrowser::winPropAtom = 0;
-HHOOK CWebBrowser::getMsgHook = NULL;
 
 CWebBrowser::CWebBrowser(CPlugin* plugin):
 	m_Plugin(plugin),
@@ -50,7 +49,7 @@ CWebBrowser::~CWebBrowser() {
 BOOL CALLBACK CWebBrowser::PreTranslateMessage(MSG* msg) {
 	BOOL ret = FALSE;
 	// here we only handle keyboard messages
-	if((msg->message >= WM_KEYFIRST && msg->message <= WM_KEYLAST) ||
+	if(TRUE || (msg->message >= WM_KEYFIRST && msg->message <= WM_KEYLAST) ||
 		(msg->message >= WM_MOUSEFIRST || msg->message <= WM_MOUSELAST)) {
 		// get the browser object from HWND
 		CWebBrowser* pWebBrowser = reinterpret_cast<CWebBrowser*>(GetProp(msg->hwnd, reinterpret_cast<LPCTSTR>(winPropAtom)));
@@ -58,44 +57,25 @@ BOOL CALLBACK CWebBrowser::PreTranslateMessage(MSG* msg) {
 			bool needTranslateAccelerator = true;
 			// Let the browser filter the key event first
 			if(pWebBrowser->GetPlugin()) {
-				if(msg->message == WM_KEYDOWN || msg->message == WM_SYSKEYDOWN) {
+				if(TRUE || msg->message == WM_KEYDOWN || msg->message == WM_SYSKEYDOWN) {
 					// we only pass the key to plugin if the browser does not want it.
 					bool isAltDown = GetKeyState(VK_MENU) & 0x8000 ? true : false;
 					bool isCtrlDown = GetKeyState(VK_CONTROL) & 0x8000 ? true : false;
 					bool isShiftDown = GetKeyState(VK_SHIFT) & 0x8000 ? true : false;
 					if(pWebBrowser->GetPlugin()->FilterKeyPress(static_cast<int>(msg->wParam), isAltDown, isCtrlDown, isShiftDown)) {
 						needTranslateAccelerator = false; // the browser wants it!
-						// forward the message to parent window.
-						msg->message = WM_NULL; // eat the message
 					}
 				}
 
 				if(needTranslateAccelerator) {
-					if(pWebBrowser->m_pInPlaceActiveObject->TranslateAccelerator(msg) == S_OK ) {
-						// NOTE: What a dirty hack!
-						// According to MSDN, translated MSGs should not be passed again to
-						// TranslateMessage().
-						// Unfortunately, message loop of Firefox does not consider accelerators
-						// and call TranslateMessage() and DispatchMessage() unconditionally.
-						// So, here we call DispatchMessage() ourself instead of letting Firefox
-						// do it, and eat the message by setting it to NULL. This way we can
-						// bypass TranslateMessage() called by Firefox.
-						// I, however, am not sure if this is correct.
-						// MSDN did not tell us whether we should pass the message to other hooks
-						// before or after we change its content.
-
-						// FIXME: It seems that we should not dispatch the message.
-						//        Otherwise, the web browser control will receive
-						//        duplicated key events sometimes?
-						// DispatchMessage(msg);
-						ATLTRACE("TRANSLATED!!\n");
-						msg->message = WM_NULL; // eat the message
+					if(pWebBrowser->m_pInPlaceActiveObject->TranslateAccelerator(msg) == S_OK) {
+						ret = TRUE;
 					}
 				}
 			}
 		}
 	}
-	return ret; // we don't touch the return value of other hooks
+	return ret;
 }
 
 LRESULT CWebBrowser::OnCreate(UINT uMsg, WPARAM wParam , LPARAM lParam, BOOL& bHandled) {
@@ -159,25 +139,18 @@ LRESULT CWebBrowser::OnCreate(UINT uMsg, WPARAM wParam , LPARAM lParam, BOOL& bH
 	}
 
 	++browserCount;
-	if(getMsgHook == NULL) {
-		// install the windows hook if needed
-		HINSTANCE inst = static_cast<CComModule*>(_pAtlModule)->GetModuleInstance();
-		// getMsgHook = SetWindowsHookEx(WH_GETMESSAGE, GetMsgHookProc, (HMODULE)inst, 0);
-
+	if(browserCount == 1) {
 		winPropAtom = GlobalAddAtom(L"IETab::WebBrowser");
 	}
-
 	return ret;
 }
 
 LRESULT CWebBrowser::OnDestroy(UINT uMsg, WPARAM wParam , LPARAM lParam, BOOL& bHandled) {
 
 	if(m_Destroyed == false) {
-
 		// It seems that ATL incorrectly calls OnDestroy twice for one window.
 		// So we need to guard OnDestroy with a flag. Otherwise we will uninitilaize things 
 		// twice and get cryptic and terrible crashes.
-
 		m_pIWebBrowser2.Release();
 		m_pInPlaceActiveObject.Release();
 
@@ -192,11 +165,7 @@ LRESULT CWebBrowser::OnDestroy(UINT uMsg, WPARAM wParam , LPARAM lParam, BOOL& b
 		--browserCount;
 		ATLASSERT(browserCount >=0); // this value should never < 0. otherwise it's a bug.
 
-		// uninstall the hook if no one needs it now
-		if(getMsgHook && 0 == browserCount) {
-			UnhookWindowsHookEx(getMsgHook);
-			getMsgHook = NULL;
-
+		if(0 == browserCount) {
 			GlobalDeleteAtom(winPropAtom);
 			winPropAtom = NULL;
 		}
