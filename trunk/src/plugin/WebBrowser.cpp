@@ -38,6 +38,16 @@ CWebBrowser::CWebBrowser(CPlugin* plugin):
 CWebBrowser::~CWebBrowser() {
 }
 
+// static
+CWebBrowser* CWebBrowser::FromHwnd(HWND hwnd) {
+	CWebBrowser* pWebBrowser;
+	do {
+		pWebBrowser = reinterpret_cast<CWebBrowser*>(GetProp(hwnd, reinterpret_cast<LPCTSTR>(winPropAtom)));
+		hwnd = ::GetParent(hwnd);
+	}while(pWebBrowser == NULL && hwnd != NULL);
+	return pWebBrowser;
+}
+
 // The message loop of Mozilla does not handle accelertor keys.
 // IOleInplaceActivateObject requires MSG be filtered by its TranslateAccellerator() method.
 // So we install a hook to do the dirty hack.
@@ -46,18 +56,18 @@ CWebBrowser::~CWebBrowser() {
 // bool nsAppShell::ProcessNextNativeEvent(bool mayWait)
 // It does PeekMessage, TranslateMessage, and then pass the result directly
 // to DispatchMessage.
-BOOL CALLBACK CWebBrowser::PreTranslateMessage(MSG* msg) {
-	BOOL ret = FALSE;
+bool CWebBrowser::PreTranslateMessage(MSG* msg) {
+	bool ret = false;
 	// here we only handle keyboard messages
-	if(TRUE || (msg->message >= WM_KEYFIRST && msg->message <= WM_KEYLAST) ||
+	if((msg->message >= WM_KEYFIRST && msg->message <= WM_KEYLAST) ||
 		(msg->message >= WM_MOUSEFIRST || msg->message <= WM_MOUSELAST)) {
 		// get the browser object from HWND
-		CWebBrowser* pWebBrowser = reinterpret_cast<CWebBrowser*>(GetProp(msg->hwnd, reinterpret_cast<LPCTSTR>(winPropAtom)));
+		CWebBrowser* pWebBrowser = FromHwnd(msg->hwnd);
 		if(pWebBrowser != NULL) {
 			bool needTranslateAccelerator = true;
 			// Let the browser filter the key event first
 			if(pWebBrowser->GetPlugin()) {
-				if(TRUE || msg->message == WM_KEYDOWN || msg->message == WM_SYSKEYDOWN) {
+				if(msg->message == WM_KEYDOWN || msg->message == WM_SYSKEYDOWN) {
 					// we only pass the key to plugin if the browser does not want it.
 					bool isAltDown = GetKeyState(VK_MENU) & 0x8000 ? true : false;
 					bool isCtrlDown = GetKeyState(VK_CONTROL) & 0x8000 ? true : false;
@@ -66,10 +76,9 @@ BOOL CALLBACK CWebBrowser::PreTranslateMessage(MSG* msg) {
 						needTranslateAccelerator = false; // the browser wants it!
 					}
 				}
-
 				if(needTranslateAccelerator) {
 					if(pWebBrowser->m_pInPlaceActiveObject->TranslateAccelerator(msg) == S_OK) {
-						ret = TRUE;
+						ret = true;
 					}
 				}
 			}
