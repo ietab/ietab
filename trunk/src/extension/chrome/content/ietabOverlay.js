@@ -763,6 +763,7 @@ IeTab.prototype.destroy = function() {
 }
 
 IeTab.prototype.filterKeyPress = function(keyCode, isAltDown, isCtrlDown, isShiftDown) {
+
 	// Search for firefox shortcut keys
 	// All of the shortcut keys used by the firefox window are defined in <key> tags.
 	// See: https://developer.mozilla.org/en-US/docs/XUL_Tutorial/Keyboard_Shortcuts
@@ -792,8 +793,16 @@ IeTab.prototype.filterKeyPress = function(keyCode, isAltDown, isCtrlDown, isShif
 			var shift = false;
 			var modifiers = element.getAttribute("modifiers");
 			if(modifiers) {
-				var mods = modifiers.split(" ");
-				// alert(mods);
+				// According to the doc:
+				// https://developer.mozilla.org/en-US/docs/XUL/Tutorial/Keyboard_Shortcuts?redirectlocale=en-US&redirectslug=XUL_Tutorial%2FKeyboard_Shortcuts
+				// modifiers should be a space-separated list.
+				// However, I noted that in newer versions of Firefox, this has became a
+				// comma-separated list instead.
+				var mods;
+				if(modifiers.indexOf(",") != -1) // a comma was found in the list
+					mods = modifiers.split(","); // split using ","
+				else
+					mods = modifiers.split(" "); // split using spaces for older versions
 				if(mods.indexOf("accel") != -1 || mods.indexOf("ctrl") != -1)
 					ctrl = true;
 				if(mods.indexOf("shift") != -1)

@@ -25,8 +25,8 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,0,0,0
- PRODUCTVERSION 3,0,0,0
+ FILEVERSION 4,0,0,0
+ PRODUCTVERSION 4,0,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -44,13 +44,13 @@ BEGIN
             VALUE "CompanyName", " "
             VALUE "FileDescription", "IE Tab plugin"
             VALUE "FileOpenName", "npietab"
-            VALUE "FileVersion", "3.0.0.0"
+            VALUE "FileVersion", "4.0.0.0"
             VALUE "InternalName", "npietab"
-            VALUE "LegalCopyright", "Copyright  (C) 2011-2012 by PCMan"
+            VALUE "LegalCopyright", "Copyright  (C) 2011-2013 by PCMan"
             VALUE "MIMEType", "application/x-ietab"
             VALUE "OriginalFilename", "npietab.dll"
             VALUE "ProductName", "IE Tab plugin"
-            VALUE "ProductVersion", "3.0.0.0"
+            VALUE "ProductVersion", "4.0.0.0"
         END
     END
     BLOCK "VarFileInfo"
