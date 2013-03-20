@@ -763,7 +763,7 @@ IeTab.prototype.destroy = function() {
 }
 
 IeTab.prototype.filterKeyPress = function(keyCode, isAltDown, isCtrlDown, isShiftDown) {
-
+return false;
 	// Search for firefox shortcut keys
 	// All of the shortcut keys used by the firefox window are defined in <key> tags.
 	// See: https://developer.mozilla.org/en-US/docs/XUL_Tutorial/Keyboard_Shortcuts
@@ -809,6 +809,14 @@ IeTab.prototype.filterKeyPress = function(keyCode, isAltDown, isCtrlDown, isShif
 					shift = true;
 				if(mods.indexOf("alt") != -1)
 					alt = true;
+			}
+			else {
+				// some special handling needs to be done for keys without modifiers
+				// do not pass these keys to firefox since IE needs them.
+				if(keyName == "VK_BACK")
+					break;
+				else if(keyName == "VK_DELETE")
+					break;
 			}
 			if(alt == isAltDown && ctrl == isCtrlDown && shift == isShiftDown) {
 				// completely match

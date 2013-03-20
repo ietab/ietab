@@ -62,6 +62,8 @@ public:
 		return m_pIWebBrowser2;
 	}
 
+	static CWebBrowser* FromHwnd(HWND hwnd);
+
 private:
 	BEGIN_MSG_MAP(CWebBrowser)
 		MESSAGE_HANDLER(WM_CREATE, OnCreate)
@@ -80,7 +82,7 @@ private:
 		// WindowProc for innermost Internet_Explorer_Server window.
 	static LRESULT InnerWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 	LRESULT HandleInnerWndProc(UINT message, WPARAM wparam, LPARAM lparam);
-	static BOOL CALLBACK PreTranslateMessage(MSG* msg);
+	static bool PreTranslateMessage(MSG* msg);
 
 	BEGIN_SINK_MAP(CWebBrowser)
 		SINK_ENTRY(0, DISPID_BEFORENAVIGATE2, OnBeforeNavigate2)

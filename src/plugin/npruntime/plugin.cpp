@@ -823,19 +823,30 @@ void CPlugin::RegisterIdentifiers() {
 Hook gTranslateMessageHook;
 static bool apiHooked = false;
 
-typedef BOOL (WINAPI *TranslateMessageProc)(const MSG *lpMsg);
+typedef BOOL (WINAPI *TranslateMessageProc)(MSG *lpMsg);
 
 // Firefox does not handle TranselateAccelerators so some keys do not
 // work in IE Tab WebBrowser control. Normally, TranslateAccelerator() should
 // be called just prior to TranslateMessage(). So we use API hook technique
 // here and hijack TranslateMessage calls.
 // Special thanks to Chrom library created by Raja Jamwal 2011, <www.experiblog.co.cc> <linux1@zoho.com>.
-BOOL WINAPI TranslateMessageHook(const MSG *lpMsg) {
+BOOL WINAPI TranslateMessageHook(MSG *lpMsg) {
 	// reset hooks, this will replace the jump instruction to original data
 
 	// let our browser controls filter the message first.
 	BOOL ret = CWebBrowser::PreTranslateMessage((MSG*)lpMsg);
-	if(!ret) {
+	if(ret) {
+		// If the message is already filtered, it should not be passed to
+		// TranslateMessage() or DispatchMessage().
+		// We can block TranslateMessage() in Firefox since we did API hijack.
+		// However Firefox still calls DispatchMessage().
+		// Of course we can hijack DispatchMessage as well, but this makes things
+		// more complicated and will impact performance.
+		// So, here we use a dirty hack, clearing the whole MSG struct.
+		// Then even if it's passed to DiapatchMessage(), it generates nothing.
+		memset(lpMsg, 0, sizeof(MSG));
+	}
+	else {
 		// if we don't translate any accelerators, call the original TranslateMessage().
 	    gTranslateMessageHook.Reset();
 		TranslateMessageProc oldTranslateMessage;
