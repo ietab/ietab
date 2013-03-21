@@ -763,7 +763,7 @@ IeTab.prototype.destroy = function() {
 }
 
 IeTab.prototype.filterKeyPress = function(keyCode, isAltDown, isCtrlDown, isShiftDown) {
-return false;
+
 	// Search for firefox shortcut keys
 	// All of the shortcut keys used by the firefox window are defined in <key> tags.
 	// See: https://developer.mozilla.org/en-US/docs/XUL_Tutorial/Keyboard_Shortcuts
