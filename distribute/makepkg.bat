@@ -8,8 +8,8 @@ set /p ver=<version.txt
 del ietab-%ver%.xpi
 del ietab-tmp.zip
 
-del ..\src\extension\plugins\npietab.dll
-copy ..\src\plugin\Release\npIETab.dll ..\src\extension\plugins
+rem del ..\src\extension\plugins\npietab.dll
+copy /y ..\src\plugin\Release\npIETab.dll ..\src\extension\plugins\npIETab.dll
 
 7za.exe a -mx9 -tzip -xr!.svn ietab-tmp.zip ..\src\extension\* ..\src\plugin\license.txt
 
