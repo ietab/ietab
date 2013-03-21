@@ -64,7 +64,6 @@ struct Hook{
 
 		if (original_function==NULL){
 			return FALSE;}
-		//MessageBox(NULL, _T("XXX"), NULL, 0);
 		return TRUE;
 	}
 
