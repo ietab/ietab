@@ -208,26 +208,22 @@ void CPlugin::Destroy() {
 bool CPlugin::InitBrowser(const char* url) {
 
 	CWebBrowser* existingBrowser = NULL;
-
-	if(url && url[0] == '@') { // the URL is a browser_id
-		// See if the browser id really points to a
-		// valid pre-existing WebBrowser control.
-		sscanf(url, "@%p", &existingBrowser);
-		// check if the control is really in our pool to prevent random memory access
-		POSITION pos = browserPool->Find(existingBrowser);
+	if(url) {
+		// check if the control is in our pool
+		POSITION pos = browserPool->Find(CString(url));
 		if(pos != NULL) {
+			CWebBrowserPoolItem* item = browserPool->GetAt(pos);
+			existingBrowser = item->m_WebBrowser;
 			browserPool->RemoveAt(pos); // remove it from the pool.
 		}
 		else
 			existingBrowser = NULL;
 	}
-
 	RECT rc;
 	GetClientRect(m_hWnd, &rc);
 	if(existingBrowser) { // if an existing brower control is assigned to our browser window
 		// FIXME: check if its HWND is valid as well.
 		m_pWebBrowser = existingBrowser;
-
 		m_pWebBrowser->SetPlugin(this);
 		m_pWebBrowser->SetParent(m_hWnd);
 		m_pWebBrowser->SetWindowPos(HWND_BOTTOM, rc.left, rc.top, (rc.right - rc.left), (rc.bottom - rc.top), SWP_SHOWWINDOW);
@@ -423,12 +419,6 @@ void CPlugin::NewTab(const char* url) {
 	if(m_pCallbackObject && IsMainThread()) {
 		m_pCallbackObject.Invoke(m_pNPInstance, "newTab", NULL, "vs", url);
 	}
-}
-
-void CPlugin::NewTab(CWebBrowser* newWebBrowser) {
-	char url[sizeof(CWebBrowser*) * 2 + 8];
-	sprintf(url, "@%p", newWebBrowser);
-	NewTab(url);
 }
 
 void CPlugin::OnCloseTab() {
