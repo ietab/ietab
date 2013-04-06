@@ -155,11 +155,16 @@ LRESULT CWebBrowser::OnCreate(UINT uMsg, WPARAM wParam , LPARAM lParam, BOOL& bH
 }
 
 LRESULT CWebBrowser::OnDestroy(UINT uMsg, WPARAM wParam , LPARAM lParam, BOOL& bHandled) {
-
 	if(m_Destroyed == false) {
 		// It seems that ATL incorrectly calls OnDestroy twice for one window.
 		// So we need to guard OnDestroy with a flag. Otherwise we will uninitilaize things 
 		// twice and get cryptic and terrible crashes.
+
+		// If we're in the pool, remove ourself from it
+		POSITION pos = CPlugin::browserPool->Find(this);
+		if(pos)
+			CPlugin::browserPool->RemoveAt(pos);
+
 		m_pIWebBrowser2.Release();
 		m_pInPlaceActiveObject.Release();
 
@@ -184,17 +189,27 @@ LRESULT CWebBrowser::OnDestroy(UINT uMsg, WPARAM wParam , LPARAM lParam, BOOL& b
 	return 0;
 }
 
-void CWebBrowser::OnNewWindow2(IDispatch **ppDisp, VARIANT_BOOL *Cancel) {
-	// ATLTRACE("NewWindow2\n");
-	CWebBrowser* newWebBrowser = CPlugin::browserPool->AddNew();
+// NewWindow3 is only available after Window xp SP2
+void CWebBrowser::OnNewWindow3(IDispatch **ppDisp, VARIANT_BOOL *Cancel, long flags, BSTR bstrUrlContext, BSTR bstrUrl) {
+	// ATLTRACE("NewWindow3\n");
+	CWebBrowser* newWebBrowser = CPlugin::browserPool->AddNew(CString(bstrUrl));
 	// FIXME: what will happen if the top level parent is destroyed before we have a new tab?
 	if(newWebBrowser) {
 		newWebBrowser->GetIWebBrowser2()->get_Application(ppDisp);
 		if(m_Plugin) {
-			m_Plugin->NewTab(newWebBrowser);
+			char* url = CPlugin::Bstr2Utf8(bstrUrl);
+			m_Plugin->NewTab(url);
+			NPN_MemFree(url);
 		}
+		// FIXME: if we don't have a plugin here, the web browser will never be shown
+		// How to solve this in the future releases?
 	}
 }
+
+/*
+void CWebBrowser::OnNewWindow2(IDispatch **ppDisp, VARIANT_BOOL *Cancel) {
+}
+*/
 
 void CWebBrowser::OnBeforeNavigate2(IDispatch *pDisp, VARIANT *url, VARIANT *Flags, VARIANT *TargetFrameName, VARIANT *PostData, VARIANT *Headers, VARIANT_BOOL *Cancel) {
 	// ATLTRACE("BeforeNavigage\n");

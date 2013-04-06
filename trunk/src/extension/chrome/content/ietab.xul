@@ -20,10 +20,10 @@ window.onpageshow = function(e) {
 		var url = decodeURI(m[1]);
 		var plugin = document.getElementById("ietab-plugin");
 		plugin.callbacks = document.IeTabCallback;
-		plugin.navigate("www.google.com.tw");
 		plugin.navigate(url);
 	}
 }
+
 </script>
 
 </window>

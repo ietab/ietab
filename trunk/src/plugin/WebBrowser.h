@@ -87,16 +87,18 @@ private:
 	BEGIN_SINK_MAP(CWebBrowser)
 		SINK_ENTRY(0, DISPID_BEFORENAVIGATE2, OnBeforeNavigate2)
 		SINK_ENTRY(0, DISPID_NAVIGATECOMPLETE2, OnNavigateComplete2)
-		SINK_ENTRY(0, DISPID_NEWWINDOW2, OnNewWindow2)
+		// SINK_ENTRY(0, DISPID_NEWWINDOW2, OnNewWindow2)
+		SINK_ENTRY(0, DISPID_NEWWINDOW3, OnNewWindow3)
 		SINK_ENTRY(0, DISPID_PROGRESSCHANGE, OnProgressChange)
 		SINK_ENTRY(0, DISPID_SETSECURELOCKICON, OnSetSecureLockIcon)
 		SINK_ENTRY(0, DISPID_STATUSTEXTCHANGE, OnStatusTextChange)
 		SINK_ENTRY(0, DISPID_TITLECHANGE, OnTitleChange)
 		SINK_ENTRY(0, DISPID_WINDOWCLOSING, OnWindowClosing)
-		SINK_ENTRY(0, DISPID_COMMANDSTATECHANGE, OnCommandStateChange )
+		SINK_ENTRY(0, DISPID_COMMANDSTATECHANGE, OnCommandStateChange)
 	END_SINK_MAP()
 
-	void __stdcall OnNewWindow2(IDispatch **ppDisp, VARIANT_BOOL *Cancel);
+	// void __stdcall OnNewWindow2(IDispatch **ppDisp, VARIANT_BOOL *Cancel);
+	void __stdcall OnNewWindow3(IDispatch **ppDisp, VARIANT_BOOL *Cancel, long flags, BSTR bstrUrlContext, BSTR bstrUrl);
 	void __stdcall OnBeforeNavigate2(IDispatch *pDisp, VARIANT *url, VARIANT *Flags, VARIANT *TargetFrameName, VARIANT *PostData, VARIANT *Headers, VARIANT_BOOL *Cancel);
 	void __stdcall OnNavigateComplete2(IDispatch* pDisp,  VARIANT* URL);
 	void __stdcall OnProgressChange(long Progress, long ProgressMax);

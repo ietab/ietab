@@ -444,11 +444,13 @@ IeTab.prototype.addBookmarkMenuitem = function(e) {
    miInt.hidden = !isBookmark || !gIeTab.getBoolPref("ietab.bookmark", true);
    miExt.hidden = !isBookmark || !gIeTab.getBoolPref("ietab.bookmark.extapp", true);
    if (!miInt.hidden) {
-      miInt.setAttribute("oncommand", "gIeTab.addIeTab(\'"+bmNode.uri+"\');");
+      miInt.setAttribute("href", bmNode.uri);
+      miInt.setAttribute("oncommand", "gIeTab.addIeTab(this.getAttribute('href'));");
       miInt.setAttribute("class", (isShowIcon?miInt.getAttribute("iconic"):""));
    }
    if (!miExt.hidden) {
-      miExt.setAttribute("oncommand", "gIeTab.loadInExtApp(\'"+bmNode.uri+"\');");
+      miExt.setAttribute("href", bmNode.uri);
+      miExt.setAttribute("oncommand", "gIeTab.loadInExtApp(this.getAttribute('href'));");
       miExt.setAttribute("class", (isShowIcon?miExt.getAttribute("iconic"):""));
    }
 }

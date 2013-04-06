@@ -47,21 +47,6 @@ var IeTabCallback = {
 	},
 
 	newTab: function(url) {
-		/*
-		if(url && url[0] == '@') {
-			// If url starts with a '@', the url string is actually a memory address
-			// It points to a new CWebBrowser control instance created by the plugin.
-			// We store this value to window.browser_id property of the new window.
-			// Then the plugin will read the value from window.browser_id to get it and
-			// it will show that browser control instead of creating a new one.
-			var new_url = document.location + "?url=" + url;
-			var new_win = window.open(new_url);
-		}
-		else {
-			// this is a plain URL string, load it.
-			var new_win = window.open(url);
-		}
-		*/
 		gIeTab.addIeTab(url);
 	},
 

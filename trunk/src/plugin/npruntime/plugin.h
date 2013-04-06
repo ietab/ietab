@@ -276,7 +276,6 @@ public:
 	void OnUpdateSecureLockIcon(long icon_id);
 
 	void NewTab(const char* url);
-	void NewTab(CWebBrowser* newWebBrowser);
 	void OnNewTab();
 
 	void CloseTab();
@@ -304,10 +303,10 @@ public:
 	// get the real URL of the html page containing the plugin
 	CString GetPageURL(void);
 
-protected:
-
 	// returns a UTF-8 string newly-allocated with NPN_MemAlloc()
 	static char* Bstr2Utf8(BSTR bstr);
+
+protected:
 
 	bool DoOleCommand(OLECMDID id, OLECMDEXECOPT opt = OLECMDEXECOPT_DODEFAULT) {
 		if(!m_pWebBrowser || !IsOleCommandEnabled(id))

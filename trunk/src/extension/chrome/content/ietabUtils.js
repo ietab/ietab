@@ -55,6 +55,25 @@ IeTab.prototype.hookCode = function(orgFunc, orgCode, myCode) {
    catch(e){ Components.utils.reportError("Failed to hook function: "+orgFunc); }
 }
 
+/*
+// We need to find a better way to implement this
+
+IeTab.prototype.hookFunc = function(orgFunc, myFunc) {
+   try{
+      var oldFunc = orgFunc;
+      orgFunc = function() {
+         if(myFunc())
+            return;
+         oldFunc();
+	  }
+   }
+   catch(e){
+      Components.utils.reportError("Failed to hook function: "+orgFunc);
+   }
+}
+*/
+
+
 IeTab.prototype.hookAttr = function(parentNode, attrName, myFunc) {
    if (typeof(parentNode) == "string") parentNode = document.getElementById(parentNode);
    try { parentNode.setAttribute(attrName, myFunc + parentNode.getAttribute(attrName)); }catch(e){ Components.utils.reportError("Failed to hook attribute: "+attrName); }
@@ -70,6 +89,43 @@ IeTab.prototype.hookProp = function(parentNode, propName, myGetter, mySetter) {
    if (myGetter) try { eval('parentNode.__defineGetter__(propName, '+ myGetter.toString() +');'); }catch(e){ Components.utils.reportError("Failed to hook property Getter: "+propName); }
    if (mySetter) try { eval('parentNode.__defineSetter__(propName, '+ mySetter.toString() +');'); }catch(e){ Components.utils.reportError("Failed to hook property Setter: "+propName); }
 }
+
+/*
+orz, This does not work at all.
+// http://jordanwallwork.co.uk/2013/02/intercepting-properties-with-getterssetters/
+IeTab.prototype.hookProp2 = function(obj, propName, myGetter, mySetter) {
+	try{
+		var desc = Object.getOwnPropertyDescriptor(obj, propName);
+		if(!desc) {
+			var protoType = Object.getPrototypeOf(obj);
+			var desc = Object.getOwnPropertyDescriptor(protoType, propName);
+		}
+		var oGetter = desc.get;
+		var oSetter = desc.set;
+		// alert(desc + "\n" + oGetter + "\n" + oSetter);
+		desc = {
+			configurable: true,
+			enumerable: true
+		};
+		if(myGetter)
+			desc.get = myGetter;
+		else if(oGetter)
+			desc.get = oGetter;
+
+		if(mySetter)
+			desc.set = mySetter;
+		else if(oSetter)
+			desc.set = oSetter;
+
+		Object.defineProperty(obj, propName, desc);
+		desc = Object.getOwnPropertyDescriptor(obj, propName);
+		alert(desc + "\n" + desc.get + "\n" + desc.set);
+	}
+	catch(e) {
+		alert(protoType + propName + e);
+	}
+}
+*/
 
 //-----------------------------------------------------------------------------
 
