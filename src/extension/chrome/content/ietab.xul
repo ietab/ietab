@@ -8,12 +8,6 @@
 
 <script src="chrome://ietab/content/ietabCallback.js" />
 <script>
-
-// add an unload handler to break bfcache. otherwise the javascript
-// code for the plugin won't be executed.
-// https://developer.mozilla.org/en-US/docs/Working_with_BFCache
-window.onunload= function() {};
-
 window.onpageshow = function(e) {
 	var m = /#(\S+)$/.exec(location.href);
 	if (m) {
@@ -23,7 +17,6 @@ window.onpageshow = function(e) {
 		plugin.navigate(url);
 	}
 }
-
 </script>
 
 </window>

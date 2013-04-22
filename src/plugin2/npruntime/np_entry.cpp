@@ -159,10 +159,6 @@ NP_Initialize(NPNetscapeFuncs* pFuncs
   NPNFuncs.releasevariantvalue     = pFuncs->releasevariantvalue;
   NPNFuncs.setexception            = pFuncs->setexception;
 
-// The function is missing from the original plugin sample provided by mozilla.
-// FIXED according to: http://forums.mozillazine.org/viewtopic.php?f=27&t=1793635
-  NPNFuncs.pluginthreadasynccall   = pFuncs->pluginthreadasynccall;
-
 #ifdef XP_UNIX
   /*
    * Set up the plugin function table that Netscape will use to

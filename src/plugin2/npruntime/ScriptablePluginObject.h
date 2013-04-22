@@ -52,8 +52,6 @@
 #include <atlwin.h>
 #include <atlstr.h>
 
-#include "plugin.h"
-
 // Helper class that can be used to map calls to the NPObject hooks
 // into virtual methods on instances of classes that derive from this
 // class.
@@ -123,6 +121,11 @@ public:
     ScriptablePluginObject(NPP npp)
         : ScriptablePluginObjectBase(npp)
     {
+		static bool symbolsInitialized = false;
+		if(!symbolsInitialized) {
+			InitSymbols();
+			symbolsInitialized = true;
+		}
     }
 
     virtual ~ScriptablePluginObject() {
@@ -131,31 +134,20 @@ public:
     inline CPlugin* GetPlugin() {
         return reinterpret_cast<CPlugin*>(mNpp->pdata);
     }
+	static void InitSymbols();
 
-	// NPObject functions, redirect to CPlugin for easier maintaince
-    virtual bool HasMethod(NPIdentifier name) {
-		return GetPlugin()->HasMethod(name);
-	}
+	// NPObject functions
+    virtual bool HasMethod(NPIdentifier name);
+    virtual bool HasProperty(NPIdentifier name);
+    virtual bool GetProperty(NPIdentifier name, NPVariant *result);
+	virtual bool SetProperty(NPIdentifier name, const NPVariant *value);
+    virtual bool Invoke(NPIdentifier name, const NPVariant *args,
+                        uint32_t argCount, NPVariant *result);
+    virtual bool InvokeDefault(const NPVariant *args, uint32_t argCount,
+                               NPVariant *result);
 
-	virtual bool HasProperty(NPIdentifier name) {
-		return GetPlugin()->HasProperty(name);
-	}
-
-	virtual bool GetProperty(NPIdentifier name, NPVariant *result) {
-		return GetPlugin()->GetProperty(name, result);
-	}
-
-	virtual bool SetProperty(NPIdentifier name, const NPVariant *value) {
-		return GetPlugin()->SetProperty(name, value);
-	}
-
-    virtual bool Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCount, NPVariant *result) {
-		return GetPlugin()->Invoke(name, args, argCount, result);
-	}
-
-	virtual bool InvokeDefault(const NPVariant *args, uint32_t argCount, NPVariant *result) {
-		return GetPlugin()->InvokeDefault(args, argCount, result);
-	}
+private:
+    CPlugin* plugin;
 };
 
 

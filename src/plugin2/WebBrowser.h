@@ -28,6 +28,7 @@
 class CPlugin;
 
 class /* ATL_NO_VTABLE */ CWebBrowser:
+	public CComPtr<IWebBrowser2>,
 	public CWindowImpl<CWebBrowser, CAxWindow>,
 	public IDispEventImpl<0, CWebBrowser> {
 public:
@@ -58,12 +59,6 @@ public:
 		return m_Plugin;
 	}
 
-	CComPtr<IWebBrowser2> GetIWebBrowser2() {
-		return m_pIWebBrowser2;
-	}
-
-	static CWebBrowser* FromHwnd(HWND hwnd);
-
 private:
 	BEGIN_MSG_MAP(CWebBrowser)
 		MESSAGE_HANDLER(WM_CREATE, OnCreate)
@@ -81,26 +76,25 @@ private:
 
 		// WindowProc for innermost Internet_Explorer_Server window.
 	static LRESULT InnerWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
-	LRESULT HandleInnerWndProc(UINT message, WPARAM wparam, LPARAM lparam);
-	static bool PreTranslateMessage(MSG* msg);
+	static LRESULT CALLBACK GetMsgHookProc(int code, WPARAM wParam, LPARAM lParam);
 
 	BEGIN_SINK_MAP(CWebBrowser)
 		SINK_ENTRY(0, DISPID_BEFORENAVIGATE2, OnBeforeNavigate2)
+		SINK_ENTRY(0, DISPID_DOCUMENTCOMPLETE, OnDocumentComplete)
 		SINK_ENTRY(0, DISPID_NAVIGATECOMPLETE2, OnNavigateComplete2)
-		// SINK_ENTRY(0, DISPID_NEWWINDOW2, OnNewWindow2)
-		SINK_ENTRY(0, DISPID_NEWWINDOW3, OnNewWindow3)
+		SINK_ENTRY(0, DISPID_NEWWINDOW2, OnNewWindow2)
 		SINK_ENTRY(0, DISPID_PROGRESSCHANGE, OnProgressChange)
 		SINK_ENTRY(0, DISPID_SETSECURELOCKICON, OnSetSecureLockIcon)
 		SINK_ENTRY(0, DISPID_STATUSTEXTCHANGE, OnStatusTextChange)
 		SINK_ENTRY(0, DISPID_TITLECHANGE, OnTitleChange)
 		SINK_ENTRY(0, DISPID_WINDOWCLOSING, OnWindowClosing)
-		SINK_ENTRY(0, DISPID_COMMANDSTATECHANGE, OnCommandStateChange)
+		SINK_ENTRY(0, DISPID_COMMANDSTATECHANGE, OnCommandStateChange )
 	END_SINK_MAP()
 
-	// void __stdcall OnNewWindow2(IDispatch **ppDisp, VARIANT_BOOL *Cancel);
-	void __stdcall OnNewWindow3(IDispatch **ppDisp, VARIANT_BOOL *Cancel, long flags, BSTR bstrUrlContext, BSTR bstrUrl);
+	void __stdcall OnNewWindow2(IDispatch **ppDisp, VARIANT_BOOL *Cancel);
 	void __stdcall OnBeforeNavigate2(IDispatch *pDisp, VARIANT *url, VARIANT *Flags, VARIANT *TargetFrameName, VARIANT *PostData, VARIANT *Headers, VARIANT_BOOL *Cancel);
 	void __stdcall OnNavigateComplete2(IDispatch* pDisp,  VARIANT* URL);
+	void __stdcall OnDocumentComplete(IDispatch *pDisp, VARIANT *URL);
 	void __stdcall OnProgressChange(long Progress, long ProgressMax);
 	void __stdcall OnSetSecureLockIcon(long SecureLockIcon);
 	void __stdcall OnStatusTextChange(BSTR Text);
@@ -110,14 +104,11 @@ private:
 
 private:
 	CPlugin* m_Plugin;
-	CComPtr<IWebBrowser2> m_pIWebBrowser2;
-
 	HWND m_hInnerWnd;
 	WNDPROC m_OldInnerWndProc;
 	CComQIPtr<IOleInPlaceActiveObject> m_pInPlaceActiveObject;
 	bool m_CanBack;
 	bool m_CanForward;
-	bool m_Destroyed;
 
 	static int browserCount;
 	static ATOM winPropAtom;

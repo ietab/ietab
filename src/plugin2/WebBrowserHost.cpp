@@ -19,10 +19,6 @@
 //
 
 #include "WebBrowserHost.h"
-#include <atlstr.h>
-#include <MLang.h>
-#include <Shlguid.h>
-#include <Mshtmcid.h>
 
 CWebBrowserHost::CWebBrowserHost(void) {
 }
@@ -48,7 +44,7 @@ STDMETHODIMP CWebBrowserHost::GetHostInfo(DOCHOSTUIINFO FAR* pInfo) {
 STDMETHODIMP CWebBrowserHost::QueryStatus( 
 	/* [unique][in] */ const GUID *pguidCmdGroup,
 	/* [in] */ ULONG cCmds,
-	/* [out][in][size_is] */ OLECMD prgCmds[],
+	/* [out][in][size_is] */ OLECMD prgCmds[  ],
 	/* [unique][out][in] */ OLECMDTEXT *pCmdText) {
 	return pguidCmdGroup ? OLECMDERR_E_UNKNOWNGROUP : OLECMDERR_E_NOTSUPPORTED;
 }
@@ -107,6 +103,3 @@ HRESULT CWebBrowserHost::AxCreateControlLicEx(LPCOLESTR lpszName, HWND hWnd, ISt
 	return hr;
 }
 
-STDMETHODIMP CWebBrowserHost::ShowContextMenu(DWORD dwID, POINT FAR* ppt, IUnknown* pcmdTarget, IDispatch* pdispObject) {
-	return E_NOTIMPL;
-}

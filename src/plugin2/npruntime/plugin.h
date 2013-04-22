@@ -49,7 +49,6 @@
 #include <atlwin.h>
 #include <atlstr.h>
 #include <atlcoll.h> // for CAtlList
-#include <comutil.h> // for _bstr_t
 
 #include <mshtmcid.h>
 
@@ -60,8 +59,6 @@
 
 class CPlugin
 {
-friend class ScriptablePluginObject;
-
 public:
 	static CWebBrowserPool* browserPool;
 
@@ -118,13 +115,13 @@ public:
 	bool GoBack() {
 		if(!m_pWebBrowser)
 			return false;
-		return SUCCEEDED(m_pWebBrowser->GetIWebBrowser2()->GoBack());
+		return SUCCEEDED((*m_pWebBrowser)->GoBack());
 	}
 
 	bool GoForward() {
 		if(!m_pWebBrowser)
 			return false;
-		return SUCCEEDED(m_pWebBrowser->GetIWebBrowser2()->GoForward());
+		return SUCCEEDED((*m_pWebBrowser)->GoForward());
 	}
 
 	bool Navigate(const char* url) {
@@ -135,20 +132,20 @@ public:
 
 		CComVariant vurl = url;
 		CComVariant null;
-		return SUCCEEDED(m_pWebBrowser->GetIWebBrowser2()->Navigate2(&vurl, &null, &null, &null, &null));
+		return SUCCEEDED((*m_pWebBrowser)->Navigate2(&vurl, &null, &null, &null, &null));
 	}
 
 	bool Refresh() {
 		if(!m_pWebBrowser)
 			return false;
 		CComVariant level = REFRESH_NORMAL;
-		return SUCCEEDED(m_pWebBrowser->GetIWebBrowser2()->Refresh2(&level));
+		return SUCCEEDED((*m_pWebBrowser)->Refresh2(&level));
 	}
 
 	bool Stop() {
 		if(!m_pWebBrowser)
 			return false;
-		return SUCCEEDED(m_pWebBrowser->GetIWebBrowser2()->Stop());
+		return SUCCEEDED((*m_pWebBrowser)->Stop());
 	}
 
 	bool SaveAs() {
@@ -196,12 +193,9 @@ public:
 	void Focus() {
 		if(!m_pWebBrowser)
 			return;
-		// if(::GetFocus() != m_pWebBrowser->m_hWnd)
-		//	m_pWebBrowser->SetFocus();
-
-		// really set the focus to the html window.
+		// m_pWebBrowser->SetFocus();
 		CComPtr<IDispatch> doc;
-		if(SUCCEEDED(m_pWebBrowser->GetIWebBrowser2()->get_Document(&doc))) {
+		if(SUCCEEDED((*m_pWebBrowser)->get_Document(&doc))) {
 			CComQIPtr<IHTMLDocument2> htmlDoc = doc;
 			if(htmlDoc) {
 				CComPtr<IHTMLWindow2> window;
@@ -256,30 +250,17 @@ public:
 
 	char* GetUrl(); // returns a UTF-8 string newly-allocated with NPN_MemAlloc()
     char* GetTitle(); // returns a UTF-8 string newly-allocated with NPN_MemAlloc()
-	char* GetStatusText(); // returns a UTF-8 string newly-allocated with NPN_MemAlloc()
 
 	// other utility methods
-
 	void UpdateLocation(BSTR url);
-	void OnUpdateLocation();
-
 	void UpdateTitle(BSTR text);
-	void OnUpdateTitle();
-
 	void UpdateProgress(long progress);
-	void OnUpdateProgress(long progress);
-
 	void UpdateStatusText(BSTR status);
-	void OnUpdateStatusText();
-
 	void UpdateSecureLockIcon(long icon_id);
-	void OnUpdateSecureLockIcon(long icon_id);
 
 	void NewTab(const char* url);
-	void OnNewTab();
-
+	void NewTab(CWebBrowser* newWebBrowser);
 	void CloseTab();
-	void OnCloseTab();
 
 	bool FilterKeyPress(int keyCode, bool isAltDown, bool isCtrlDown, bool isShiftDown) {
 		bool ret = false;
@@ -293,9 +274,6 @@ public:
 		return ret;
 	}
 
-	void SwitchBackToFirefox();
-	void OnSwitchBackToFirefox();
-
 	HWND GetHwnd() {
 		return m_hWnd;
 	}
@@ -303,22 +281,22 @@ public:
 	// get the real URL of the html page containing the plugin
 	CString GetPageURL(void);
 
+protected:
+
 	// returns a UTF-8 string newly-allocated with NPN_MemAlloc()
 	static char* Bstr2Utf8(BSTR bstr);
-
-protected:
 
 	bool DoOleCommand(OLECMDID id, OLECMDEXECOPT opt = OLECMDEXECOPT_DODEFAULT) {
 		if(!m_pWebBrowser || !IsOleCommandEnabled(id))
 			return false;
-		return SUCCEEDED(m_pWebBrowser->GetIWebBrowser2()->ExecWB(id, opt, NULL, NULL));
+		return SUCCEEDED((*m_pWebBrowser)->ExecWB(id, opt, NULL, NULL));
 	}
 
 	bool DoHtmlCommand(int id, OLECMDEXECOPT opt = OLECMDEXECOPT_DODEFAULT) {
 		if(!m_pWebBrowser)
 			return false;
 		CComPtr<IDispatch> disp;
-		m_pWebBrowser->GetIWebBrowser2()->get_Document(&disp);
+		(*m_pWebBrowser)->get_Document(&disp);
 		CComQIPtr<IOleCommandTarget> cmdTarget = disp; // = m_WebBrowser;
 		return SUCCEEDED(cmdTarget->Exec(&CGID_MSHTML, id, opt, NULL, NULL));
 	}
@@ -327,7 +305,7 @@ protected:
 		if(!m_pWebBrowser)
 			return false;
 		OLECMDF flags;
-		return (SUCCEEDED(m_pWebBrowser->GetIWebBrowser2()->QueryStatusWB(id, &flags)) && (flags & OLECMDF_ENABLED));
+		return (SUCCEEDED((*m_pWebBrowser)->QueryStatusWB(id, &flags)) && (flags & OLECMDF_ENABLED));
 	}
 
 	NPObject* GetDomDocument() {
@@ -344,17 +322,6 @@ protected:
 
 	static LRESULT CALLBACK PluginWinProc(HWND, UINT, WPARAM, LPARAM);
 
-	// NPObject functions redirected from ScriptablePluginObject
-    bool HasMethod(NPIdentifier name);
-    bool HasProperty(NPIdentifier name);
-    bool GetProperty(NPIdentifier name, NPVariant *result);
-	bool SetProperty(NPIdentifier name, const NPVariant *value);
-    bool Invoke(NPIdentifier name, const NPVariant *args,
-                uint32_t argCount, NPVariant *result);
-    bool InvokeDefault(const NPVariant *args, uint32_t argCount,
-                               NPVariant *result);
-	static void RegisterIdentifiers();
-
 private:
     NPP m_pNPInstance;
     HWND m_hWnd;
@@ -366,10 +333,8 @@ private:
 	long m_Progress;
 	long m_SecureLockIcon;
     CWebBrowser* m_pWebBrowser;
-	WNDPROC m_lpOldProc; // old window proc of the Gecko plugin window
+	WNDPROC lpOldProc; // old window proc of the Gecko plugin window
 	DWORD m_ThreadId;
-
-	CComBSTR m_StatusText;
 };
 
 #endif // __PLUGIN_H__

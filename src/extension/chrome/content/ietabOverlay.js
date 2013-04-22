@@ -1,22 +1,3 @@
-//
-// ietabOverlay.js
-//
-// Copyright (C) 2012 yuoo2k
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http:www.gnu.org/licenses/>.
-//
-
 const gIeTabChromeStr = "chrome://ietab/content/ietab.xul#";
 
 IeTab.prototype.QueryInterface = function(aIID) {
@@ -444,13 +425,11 @@ IeTab.prototype.addBookmarkMenuitem = function(e) {
    miInt.hidden = !isBookmark || !gIeTab.getBoolPref("ietab.bookmark", true);
    miExt.hidden = !isBookmark || !gIeTab.getBoolPref("ietab.bookmark.extapp", true);
    if (!miInt.hidden) {
-      miInt.setAttribute("href", bmNode.uri);
-      miInt.setAttribute("oncommand", "gIeTab.addIeTab(this.getAttribute('href'));");
+      miInt.setAttribute("oncommand", "gIeTab.addIeTab(\'"+bmNode.uri+"\');");
       miInt.setAttribute("class", (isShowIcon?miInt.getAttribute("iconic"):""));
    }
    if (!miExt.hidden) {
-      miExt.setAttribute("href", bmNode.uri);
-      miExt.setAttribute("oncommand", "gIeTab.loadInExtApp(this.getAttribute('href'));");
+      miExt.setAttribute("oncommand", "gIeTab.loadInExtApp(\'"+bmNode.uri+"\');");
       miExt.setAttribute("class", (isShowIcon?miExt.getAttribute("iconic"):""));
    }
 }
@@ -762,74 +741,6 @@ IeTab.prototype.init = function() {
 IeTab.prototype.destroy = function() {
    gIeTab.removeEventAll();
    delete gIeTab;
-}
-
-IeTab.prototype.filterKeyPress = function(keyCode, isAltDown, isCtrlDown, isShiftDown) {
-
-	// Search for firefox shortcut keys
-	// All of the shortcut keys used by the firefox window are defined in <key> tags.
-	// See: https://developer.mozilla.org/en-US/docs/XUL_Tutorial/Keyboard_Shortcuts
-	//
-	// By searching the key in the <key> tags, we can find the command it should launch.
-	// In this way, we can pass key events got by IE Tab to Firefox, and launch commands as appropriate.
-	var keyName = this.keyCodeToString(keyCode);
-	var elements = document.getElementsByTagName("key");
-	var n = elements.length;
-	for(i = 0; i < n; ++i) {
-		var element = elements[i];
-		var same_key = false;
-		if(keyName) { // if the key pressed has a virtual key name
-			var key = element.getAttribute("keycode");
-			if(keyName == key)
-				same_key = true;
-		}
-		else { // the key pressed is a printable character
-			var key = element.getAttribute("key").toUpperCase();
-			if(keyCode == key.charCodeAt(0))
-				same_key = true;
-		}
-
-		if(same_key) { // if key matches, check modifiers
-			var alt = false;
-			var ctrl = false;
-			var shift = false;
-			var modifiers = element.getAttribute("modifiers");
-			if(modifiers) {
-				// According to the doc:
-				// https://developer.mozilla.org/en-US/docs/XUL/Tutorial/Keyboard_Shortcuts?redirectlocale=en-US&redirectslug=XUL_Tutorial%2FKeyboard_Shortcuts
-				// modifiers should be a space-separated list.
-				// However, I noted that in newer versions of Firefox, this has became a
-				// comma-separated list instead.
-				var mods;
-				if(modifiers.indexOf(",") != -1) // a comma was found in the list
-					mods = modifiers.split(","); // split using ","
-				else
-					mods = modifiers.split(" "); // split using spaces for older versions
-				if(mods.indexOf("accel") != -1 || mods.indexOf("ctrl") != -1)
-					ctrl = true;
-				if(mods.indexOf("shift") != -1)
-					shift = true;
-				if(mods.indexOf("alt") != -1)
-					alt = true;
-			}
-			else {
-				// some special handling needs to be done for keys without modifiers
-				// do not pass these keys to firefox since IE needs them.
-				if(keyName == "VK_BACK")
-					break;
-				else if(keyName == "VK_DELETE")
-					break;
-			}
-			if(alt == isAltDown && ctrl == isCtrlDown && shift == isShiftDown) {
-				// completely match
-				// alert(element.id);
-				element.doCommand();
-				return true;
-				break;
-			}
-		}
-	}
-	return false;
 }
 
 var gIeTab = new IeTab();

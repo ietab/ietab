@@ -19,7 +19,7 @@
 //
 
 #include <atlcoll.h> // for CAtlList
-#include <atlstr.h>
+
 #pragma once
 #include <atlwin.h>
 #include <cstdio>
@@ -28,53 +28,36 @@ class CWebBrowser;
 
 typedef CWinTraits<WS_OVERLAPPEDWINDOW&~WS_VISIBLE> CWebBrowserPoolTraits;
 
-struct CWebBrowserPoolItem {
-
-	CWebBrowserPoolItem(CWebBrowser* webBrowser = NULL, CString url = CString()):
-		m_URL(url),
-		m_WebBrowser(webBrowser),
-		m_WaitTime(0) {
-	}
-
-	CString m_URL;
-	CWebBrowser* m_WebBrowser;
-	int m_WaitTime;
-};
-
-class CWebBrowserPool: public CWindowImpl<CWebBrowserPool, CWindow, CWebBrowserPoolTraits> {
-
+class CWebBrowserPool :
+	public CWindowImpl<CWebBrowserPool, CWindow, CWebBrowserPoolTraits> {
 public:
 	CWebBrowserPool(void);
 	~CWebBrowserPool(void);
 
-	POSITION Find(CString url);
-	POSITION Find(CWebBrowser* webBrowser);
-
-	CWebBrowser* AddNew(CString url);
-
-	CWebBrowserPoolItem* GetAt(POSITION pos) {
-		return m_Pool.GetAt(pos);
+	POSITION FindById(const char* id) {
+		CWebBrowser* existingBrowser;
+		sscanf(id, "%p", &existingBrowser);
+		return m_Pool.Find(existingBrowser);
 	}
 
-	void RemoveAt(POSITION pos);
+	POSITION Find(CWebBrowser* browser) {
+		return m_Pool.Find(browser);
+	}
+
+	void RemoveAt(POSITION pos) {
+		m_Pool.RemoveAt(pos);
+	}
+
+	CWebBrowser* AddNew();
 
 private:
-
-	enum {
-		TIMER_ID = 100,
-		TIMEOUT = 10
-	};
-
 	BEGIN_MSG_MAP(CWebBrowser)
-		MESSAGE_HANDLER(WM_TIMER, OnTimer)
 		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
 	END_MSG_MAP()
 
-	LRESULT OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
 private:
-	CAtlList<CWebBrowserPoolItem*> m_Pool;
-	bool m_HasTimer;
+	CAtlList<CWebBrowser*> m_Pool;
 };
 

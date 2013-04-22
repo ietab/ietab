@@ -42,23 +42,22 @@ public:
 
 	BEGIN_COM_MAP(CWebBrowserHost)
 		COM_INTERFACE_ENTRY(IDocHostUIHandler)
-		COM_INTERFACE_ENTRY(IOleCommandTarget)
+		// COM_INTERFACE_ENTRY(IOleCommandTarget)
 		COM_INTERFACE_ENTRY_CHAIN(CAxHostWindow)
 	END_COM_MAP()
 
 	// IDocHostUIHandler
 	STDMETHOD(GetHostInfo)(DOCHOSTUIINFO FAR* pInfo);
 	STDMETHOD(TranslateAccelerator)(LPMSG lpMsg, const GUID FAR* pguidCmdGroup, DWORD nCmdID) {
-		return CAxHostWindow::TranslateAccelerator(lpMsg, pguidCmdGroup, nCmdID);
-		// return E_NOTIMPL;
+		return E_NOTIMPL;
 	}
 	STDMETHOD(GetExternal)(IDispatch** ppDispatch) {
-		return CAxHostWindow::GetExternal(ppDispatch);
-		// return E_NOTIMPL;
+		return E_NOTIMPL;
 	}
-
-	STDMETHOD(ShowContextMenu)(DWORD dwID, POINT FAR* ppt, IUnknown* pcmdTarget, IDispatch* pdispObject);
-
+	STDMETHOD(ShowContextMenu)(DWORD dwID, POINT FAR* ppt, IUnknown FAR* pcmdtReserved, IDispatch FAR* pdispReserved) { 
+		return E_NOTIMPL;
+		// return S_FALSE;
+	}
 	STDMETHOD(ShowUI)(DWORD dwID, IOleInPlaceActiveObject FAR* pActiveObject,
 		IOleCommandTarget FAR* pCommandTarget,
 		IOleInPlaceFrame  FAR* pFrame,

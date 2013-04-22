@@ -19,7 +19,7 @@
 
 #include "NPObjectPtr.h"
 #include <malloc.h>
-#include "NPVariant.h"
+
 
 /*
 Format symbols to designate argument type:

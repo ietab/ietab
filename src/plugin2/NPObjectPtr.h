@@ -27,11 +27,10 @@
 #include "npruntime.h"
 #include <cstdarg>
 
-#include "NPVariant.h"
-
 // An easy to use C++ wrapper for NPObject
 
-class CNPObjectPtr {
+class CNPObjectPtr
+{
 public:
 	CNPObjectPtr(NPObject* object = NULL) : p(object) {
 		if(object)
@@ -96,6 +95,7 @@ public:
 		NPIdentifier property_id = NPN_GetStringIdentifier(property);
 		return NPN_GetProperty(npp, p, property_id, ret);
 	}
+
 
 	NPObject* p;
 };
